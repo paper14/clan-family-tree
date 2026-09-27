@@ -1,0 +1,101 @@
+/* Clan Family Tree tokens — compiled from tokens.json */
+:root, [data-theme="paper"] {
+  --paper: #f6f1e6;
+  --paper-raised: #fcf9f2;
+  --paper-sunk: #ede6d6;
+  --rule: #d8cdb8;
+  --rule-strong: #8c7f69;
+  --ink: #241e17;
+  --ink-muted: #5e5446;
+  --lineage: #2e5236;
+  --lineage-soft: #e2ebdf;
+  --on-lineage: #ffffff;
+  --gilt: #7d5f14;
+  --gilt-soft: #f1e6c8;
+  --spouse: #5a6570;
+  --living: #245a78;
+  --living-soft: #dfeaf0;
+  --warn: #8a5300;
+  --warn-soft: #f6e5c6;
+  --danger: #a02a1c;
+  --danger-soft: #f7dfd9;
+  --focus: #245a78;
+  --on-danger: var(--on-lineage);
+  --link-hidden: var(--rule-strong);
+  --shadow-sm: 0 1px 2px #241e1714;
+  --shadow-lg: 0 6px 20px -4px #241e172e;
+  --focus-ring: 0 0 0 2px #f6f1e6, 0 0 0 4px #245a78;
+}
+[data-theme="lamplight"] {
+  --paper: #1c1a17;
+  --paper-raised: #25221e;
+  --paper-sunk: #151310;
+  --rule: #3b362f;
+  --rule-strong: #857a67;
+  --ink: #eee6d8;
+  --ink-muted: #b0a590;
+  --lineage: #93c49c;
+  --lineage-soft: #1f3024;
+  --on-lineage: #1c1a17;
+  --gilt: #d8b565;
+  --gilt-soft: #352b14;
+  --spouse: #a2afbb;
+  --living: #8cc4e0;
+  --living-soft: #17303d;
+  --warn: #e8b25a;
+  --warn-soft: #3a2a0c;
+  --danger: #f19684;
+  --danger-soft: #3f1a14;
+  --focus: #8cc4e0;
+  --shadow-sm: 0 1px 2px #00000080;
+  --shadow-lg: 0 8px 24px -4px #000000b3;
+  --focus-ring: 0 0 0 2px #1c1a17, 0 0 0 4px #8cc4e0;
+  --on-danger: var(--on-lineage);
+  --link-hidden: var(--rule-strong);
+}
+[data-theme="print"] {
+  --paper: #ffffff;
+  --paper-raised: #ffffff;
+  --paper-sunk: #f2f2f2;
+  --rule: #bdbdbd;
+  --rule-strong: #555555;
+  --ink: #000000;
+  --ink-muted: #333333;
+  --lineage: #1f3d26;
+  --lineage-soft: #ffffff;
+  --on-lineage: #ffffff;
+  --gilt: #5c4508;
+  --gilt-soft: #ffffff;
+  --spouse: #444444;
+  --living: #1d4a63;
+  --living-soft: #ffffff;
+  --warn: #6b4000;
+  --warn-soft: #ffffff;
+  --danger: #8a1f13;
+  --danger-soft: #ffffff;
+  --focus: #000000;
+  --shadow-sm: none;
+  --shadow-lg: none;
+  --focus-ring: none;
+  --on-danger: var(--on-lineage);
+  --link-hidden: var(--rule-strong);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --radius-0: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --node-width: 176px;
+  --node-gap: 24px;
+  --generation-gap: 72px;
+  --print-node-min: 45mm;
+  --link-width: 1.5px;
+  --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3", "Source Sans Pro", "Segoe UI", system-ui, sans-serif;
+}

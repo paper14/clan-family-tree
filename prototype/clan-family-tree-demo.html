@@ -1,0 +1,1754 @@
+<!doctype html>
+<html lang="en" data-theme="paper">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clan Family Tree — Demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style id="page-size"></style>
+<style>
+/* ---------- tokens (Clan Family Tree design system) ---------- */
+:root, [data-theme="paper"] {
+  --paper:#f6f1e6; --paper-raised:#fcf9f2; --paper-sunk:#ede6d6; --rule:#d8cdb8; --rule-strong:#8c7f69;
+  --ink:#241e17; --ink-muted:#5e5446; --lineage:#2e5236; --lineage-soft:#e2ebdf; --on-lineage:#ffffff;
+  --gilt:#7d5f14; --gilt-soft:#f1e6c8; --spouse:#5a6570; --living:#245a78; --living-soft:#dfeaf0;
+  --warn:#8a5300; --warn-soft:#f6e5c6; --danger:#a02a1c; --danger-soft:#f7dfd9; --focus:#245a78;
+  --shadow-sm:0 1px 2px #241e1714; --shadow-lg:0 6px 20px -4px #241e172e;
+  --focus-ring:0 0 0 2px #f6f1e6, 0 0 0 4px #245a78;
+}
+[data-theme="lamplight"] {
+  --paper:#1c1a17; --paper-raised:#25221e; --paper-sunk:#151310; --rule:#3b362f; --rule-strong:#857a67;
+  --ink:#eee6d8; --ink-muted:#b0a590; --lineage:#93c49c; --lineage-soft:#1f3024; --on-lineage:#1c1a17;
+  --gilt:#d8b565; --gilt-soft:#352b14; --spouse:#a2afbb; --living:#8cc4e0; --living-soft:#17303d;
+  --warn:#e8b25a; --warn-soft:#3a2a0c; --danger:#f19684; --danger-soft:#3f1a14; --focus:#8cc4e0;
+  --shadow-sm:0 1px 2px #00000080; --shadow-lg:0 8px 24px -4px #000000b3;
+  --focus-ring:0 0 0 2px #1c1a17, 0 0 0 4px #8cc4e0;
+}
+[data-theme="print"] {
+  --paper:#ffffff; --paper-raised:#ffffff; --paper-sunk:#f2f2f2; --rule:#bdbdbd; --rule-strong:#555555;
+  --ink:#000000; --ink-muted:#333333; --lineage:#1f3d26; --lineage-soft:#ffffff; --on-lineage:#ffffff;
+  --gilt:#5c4508; --gilt-soft:#ffffff; --spouse:#444444; --living:#1d4a63; --living-soft:#ffffff;
+  --warn:#6b4000; --warn-soft:#ffffff; --danger:#8a1f13; --danger-soft:#ffffff; --focus:#000000;
+  --shadow-sm:none; --shadow-lg:none; --focus-ring:none;
+}
+:root {
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px; --space-6:32px; --space-8:48px;
+  --radius-sm:2px; --radius-md:4px;
+  --font-serif:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --font-sans:"Source Sans 3","Source Sans Pro","Segoe UI",system-ui,sans-serif;
+}
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; }
+html, body { margin:0; height:100%; }
+body { font-family:var(--font-sans); font-size:15px; line-height:22px; background:var(--paper); color:var(--ink); }
+a { color:var(--lineage); }
+a:hover { color:var(--ink); }
+h1,h2,h3 { margin:0; }
+.serif { font-family:var(--font-serif); }
+.muted { color:var(--ink-muted); }
+.small { font-size:13px; line-height:18px; }
+.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+button, input, select, textarea { font:inherit; color:inherit; }
+:focus-visible { outline:2px solid transparent; box-shadow:var(--focus-ring); }
+
+/* ---------- shell ---------- */
+.app { display:flex; min-height:100vh; }
+.side { width:232px; flex-shrink:0; padding:28px 16px 24px; display:flex; flex-direction:column; gap:28px; background:var(--paper-raised); border-right:1px solid var(--rule); position:sticky; top:0; height:100vh; }
+.brand { padding:0 8px; }
+.brand .t { font-family:var(--font-serif); font-size:22px; line-height:26px; font-weight:600; }
+.nav { display:flex; flex-direction:column; gap:2px; }
+.nav a { display:flex; align-items:center; justify-content:space-between; min-height:44px; padding:0 12px; border-radius:var(--radius-md); color:var(--ink); text-decoration:none; }
+.nav a:hover { background:var(--paper-sunk); }
+.nav a.on { background:var(--lineage-soft); color:var(--lineage); font-weight:600; }
+.side .grow { flex-grow:1; }
+.box { padding:16px; border:1px solid var(--rule); border-radius:var(--radius-md); background:var(--paper); display:flex; flex-direction:column; gap:8px; }
+main { flex-grow:1; min-width:0; padding:32px 48px 48px; }
+.page-head { display:flex; align-items:flex-end; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+.page-head .grow { flex-grow:1; display:flex; flex-direction:column; gap:4px; min-width:260px; }
+.display { font-family:var(--font-serif); font-size:40px; line-height:44px; font-weight:600; letter-spacing:-.01em; }
+.crumbs { font-size:13px; line-height:18px; color:var(--ink-muted); display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ---------- components ---------- */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; font:600 15px/20px var(--font-sans); min-height:40px; padding:0 16px; border-radius:var(--radius-md); border:1px solid var(--rule-strong); background:var(--paper-raised); color:var(--ink); cursor:pointer; text-decoration:none; white-space:nowrap; }
+.btn:hover { background:var(--paper-sunk); color:var(--ink); }
+.btn.primary { background:var(--lineage); border-color:var(--lineage); color:var(--on-lineage); }
+.btn.primary:hover { filter:brightness(1.08); color:var(--on-lineage); }
+.btn.danger { background:var(--danger); border-color:var(--danger); color:var(--on-lineage); }
+.btn.danger:hover { filter:brightness(1.08); color:var(--on-lineage); }
+.btn.link { border-color:transparent; background:transparent; color:var(--lineage); text-decoration:underline; text-underline-offset:3px; padding:0 8px; }
+.btn.sm { min-height:32px; padding:0 10px; font-size:13px; }
+.btn.icon { width:40px; padding:0; }
+.field { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.label { font:600 13px/18px var(--font-sans); }
+.label .req { font-weight:400; color:var(--ink-muted); margin-left:8px; }
+.sub { font:400 13px/18px var(--font-sans); color:var(--ink-muted); }
+.input { font:400 15px/22px var(--font-sans); background:var(--paper-raised); border:1px solid var(--rule-strong); border-radius:var(--radius-sm); padding:8px 12px; width:100%; min-width:0; color:var(--ink); }
+select.input { padding:8px 8px; }
+textarea.input { min-height:88px; resize:vertical; }
+.input::placeholder { color:var(--ink-muted); }
+.field.clan .label { color:var(--lineage); }
+.field.clan .input { border:2px solid var(--lineage); padding:7px 11px; }
+.field.err .input { border:2px solid var(--danger); padding:7px 11px; }
+.hint { font:400 13px/18px var(--font-sans); color:var(--ink-muted); }
+.hint.error { color:var(--danger); }
+.check { display:flex; gap:10px; align-items:flex-start; font-size:15px; line-height:22px; cursor:pointer; }
+.check input { width:18px; height:18px; margin:2px 0 0; flex-shrink:0; accent-color:var(--lineage); }
+.radios { display:flex; gap:20px; flex-wrap:wrap; }
+.radios label { display:flex; gap:8px; align-items:center; min-height:36px; cursor:pointer; }
+.radios input { width:18px; height:18px; margin:0; accent-color:var(--lineage); }
+.badge { display:inline-block; font:600 11px/16px var(--font-sans); letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:var(--radius-sm); background:var(--paper-sunk); color:var(--ink-muted); white-space:nowrap; }
+.badge.lineage { background:var(--lineage-soft); color:var(--lineage); }
+.badge.gilt { background:var(--gilt-soft); color:var(--gilt); }
+.badge.living { background:var(--living-soft); color:var(--living); }
+.badge.warn { background:var(--warn-soft); color:var(--warn); }
+.badge.danger { background:var(--danger-soft); color:var(--danger); }
+[data-theme="print"] .badge { border:1px solid currentColor; }
+.gen { font:600 11px/16px var(--font-sans); letter-spacing:.08em; text-transform:uppercase; color:var(--gilt); }
+.card { background:var(--paper-raised); border:1px solid var(--rule); border-radius:var(--radius-md); padding:24px; display:flex; flex-direction:column; gap:16px; min-width:0; }
+.card h2 { font-size:18px; line-height:24px; font-weight:600; }
+.note { padding:10px 12px; border-radius:var(--radius-sm); font-size:13px; line-height:18px; }
+.note.warn { background:var(--warn-soft); } .note.warn b { color:var(--warn); }
+.note.error { background:var(--danger-soft); } .note.error b { color:var(--danger); }
+.note.info { background:var(--lineage-soft); } .note.info b { color:var(--lineage); }
+.grid2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.grid3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.stack { display:flex; flex-direction:column; gap:16px; }
+.photo { flex:none; width:40px; height:40px; border-radius:var(--radius-sm); background:var(--paper-sunk); color:var(--ink-muted); display:grid; place-items:center; font:600 13px/1 var(--font-serif); overflow:hidden; }
+.photo img { width:100%; height:100%; object-fit:cover; }
+.photo.lg { width:112px; height:112px; font-size:32px; border:1px solid var(--rule); }
+
+/* person node (small card) */
+.pnode { display:flex; gap:12px; align-items:flex-start; width:100%; text-align:left; padding:11px; background:var(--paper-raised); color:var(--ink); border:1px solid var(--rule-strong); border-radius:var(--radius-md); cursor:pointer; text-decoration:none; }
+.pnode.clan { border:2px solid var(--lineage); padding:10px; }
+.pnode:hover { background:var(--paper-sunk); color:var(--ink); }
+.pnode .nm { font:600 17px/22px var(--font-serif); }
+.pnode .nk { font-weight:400; font-style:italic; }
+.pnode .dt { font-size:13px; line-height:18px; color:var(--ink-muted); }
+.pnode .tx { display:flex; flex-direction:column; gap:2px; min-width:0; align-items:flex-start; }
+
+/* people list */
+.list { background:var(--paper-raised); border:1px solid var(--rule); border-radius:var(--radius-md); overflow:hidden; }
+.lrow { display:grid; grid-template-columns:3rem minmax(0,1fr) 150px minmax(170px,auto); gap:12px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--rule); text-decoration:none; color:var(--ink); }
+.lrow:last-child { border-bottom:0; }
+a.lrow:hover, div.lrow:hover { background:var(--paper-sunk); color:var(--ink); }
+.lrow .n a { color:var(--ink); text-decoration:none; } .lrow .n a:hover { text-decoration:underline; }
+.lhead { font:600 11px/16px var(--font-sans); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-muted); border-bottom:1px solid var(--rule-strong); }
+.lrow .g { font:600 13px/18px var(--font-serif); color:var(--gilt); text-align:right; font-variant-numeric:tabular-nums; }
+.lrow .n { font:600 17px/22px var(--font-serif); }
+.lrow .p { font-size:13px; line-height:18px; color:var(--ink-muted); }
+.lrow .d { font-size:13px; color:var(--ink-muted); font-variant-numeric:tabular-nums; }
+.lrow .f { display:flex; gap:4px; justify-content:flex-end; flex-wrap:wrap; }
+.filters { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px; }
+
+/* tree */
+.tree-wrap { position:relative; background:var(--paper-raised); border:1px solid var(--rule); border-radius:var(--radius-md); overflow:auto; height:calc(100vh - 290px); min-height:420px; }
+.tree { position:relative; transform-origin:0 0; }
+.tree svg { position:absolute; left:0; top:0; overflow:visible; }
+.tn { position:absolute; display:flex; gap:10px; align-items:flex-start; padding:10px; background:var(--paper-raised); color:var(--ink); border:1px solid var(--rule-strong); border-radius:var(--radius-md); box-shadow:var(--shadow-sm); text-align:left; overflow:hidden; text-decoration:none; }
+.tn.clan { border:2px solid var(--lineage); padding:9px; }
+.tn.founder { background:var(--gilt-soft); }
+.tn.sel { background:var(--lineage-soft); }
+a.tn:hover { background:var(--paper-sunk); color:var(--ink); }
+.tn .tx { display:flex; flex-direction:column; gap:1px; min-width:0; }
+.tn .nm { font:600 16px/20px var(--font-serif); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.tn .nk { font-weight:400; font-style:italic; }
+.tn .dt { font-size:12px; line-height:16px; color:var(--ink-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tn .hid { font-size:11px; line-height:14px; color:var(--warn); }
+.tn .photo { width:36px; height:36px; }
+.join { position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--spouse); font:600 18px/1 var(--font-serif); }
+.join span { font:400 10px/12px var(--font-sans); margin-top:2px; white-space:nowrap; }
+.legend { display:flex; gap:20px; flex-wrap:wrap; align-items:center; font-size:13px; color:var(--ink-muted); margin-top:12px; }
+.seg { display:inline-flex; border:1px solid var(--rule-strong); border-radius:var(--radius-md); overflow:hidden; background:var(--paper-raised); }
+.seg button { min-width:40px; min-height:38px; border:0; background:transparent; cursor:pointer; }
+.seg button.on { background:var(--lineage); color:var(--on-lineage); font-weight:600; }
+
+/* add-children rows */
+.kids { background:var(--paper-raised); border:1px solid var(--rule); border-radius:var(--radius-md); overflow-x:auto; }
+.krow { display:grid; grid-template-columns:28px minmax(120px,1.3fr) minmax(90px,1fr) minmax(100px,1.1fr) minmax(90px,1fr) 110px minmax(110px,1fr) 150px 120px 40px; gap:10px; align-items:center; padding:8px 14px; border-bottom:1px solid var(--rule); min-width:1080px; }
+.krow.h { font:600 11px/16px var(--font-sans); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-muted); border-bottom:1px solid var(--rule-strong); }
+.krow .input { padding:6px 8px; }
+
+/* print */
+.sheet-wrap { background:var(--paper-sunk); border-radius:var(--radius-md); padding:20px; overflow:hidden; }
+.sheet { background:#fff; box-shadow:var(--shadow-lg); position:relative; overflow:hidden; margin:0 auto; }
+#print-root { display:none; }
+.outline { font-size:11pt; line-height:1.45; color:#000; }
+.outline h1 { font-family:var(--font-serif); font-size:20pt; margin:0 0 4pt; }
+.outline .meta { font-size:9pt; color:#333; border-bottom:1.5px solid #000; padding-bottom:8pt; margin-bottom:10pt; }
+.outline .ln { display:flex; gap:8pt; break-inside:avoid; }
+.outline .ln .gn { width:14pt; text-align:right; font-weight:600; flex-shrink:0; }
+.outline .ln b { font-family:var(--font-serif); }
+.outline .ln .dd { color:#333; }
+
+.toast { position:fixed; right:24px; bottom:24px; background:var(--ink); color:var(--paper); padding:12px 16px; border-radius:var(--radius-md); box-shadow:var(--shadow-lg); font-size:15px; opacity:0; transform:translateY(8px); transition:.2s; pointer-events:none; z-index:10; max-width:420px; }
+.toast.on { opacity:1; transform:none; }
+
+/* ---------- v0.8 additions ---------- */
+.clan-pick { display:flex; flex-direction:column; gap:4px; padding:0 8px; }
+.clan-pick select { font:600 15px/20px var(--font-serif); }
+.nav .sep { height:1px; background:var(--rule); margin:8px 4px; }
+.clancards { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+.clancard { display:flex; flex-direction:column; gap:12px; padding:24px; background:var(--paper-raised); border:1px solid var(--rule); border-radius:var(--radius-md); }
+.clancard.cur { border:2px solid var(--lineage); padding:23px; }
+.clancard .nm { font:600 26px/30px var(--font-serif); }
+.stats { display:flex; gap:20px; font-size:13px; color:var(--ink-muted); }
+.stats b { display:block; font:600 22px/26px var(--font-serif); color:var(--ink); }
+.caption { font-size:13px; line-height:18px; color:var(--ink-muted); font-style:italic; }
+.tn .oc { font-size:11px; line-height:14px; color:var(--spouse); font-weight:600; }
+.oln { display:flex; gap:10px; align-items:baseline; padding:5px 8px; border-bottom:1px solid var(--rule); }
+.oln:hover { background:var(--paper-sunk); }
+.oln .ogen { width:24px; flex-shrink:0; text-align:right; font:600 13px/18px var(--font-serif); color:var(--gilt); }
+.oln .opos { min-width:22px; flex-shrink:0; font-size:13px; color:var(--ink-muted); font-variant-numeric:tabular-nums; }
+.oln .onm { font:600 16px/22px var(--font-serif); color:var(--ink); text-decoration:none; }
+.oln .onm:hover { text-decoration:underline; }
+.oln .odt { font-size:13px; color:var(--ink-muted); }
+.oln .osp { font-size:14px; }
+.oln .ocount { font-size:12px; color:var(--ink-muted); white-space:nowrap; }
+.otg { width:24px; height:24px; flex-shrink:0; border:1px solid var(--rule-strong); border-radius:var(--radius-sm); background:var(--paper-raised); color:var(--ink); cursor:pointer; font-size:12px; line-height:1; padding:0; align-self:center; }
+.otg.none { visibility:hidden; }
+.otg.cut { border-style:dashed; color:var(--ink-muted); cursor:default; }
+mark { background:var(--warn-soft); color:var(--ink); outline:1px solid var(--warn); border-radius:2px; padding:0 1px; }
+.ttg { position:absolute; height:20px; min-width:24px; padding:0 6px; border:1px solid var(--rule-strong); border-radius:10px; background:var(--paper-raised); color:var(--ink); font:600 11px/18px var(--font-sans); cursor:pointer; z-index:2; }
+.tmore { position:absolute; font:400 11px/14px var(--font-sans); color:var(--ink-muted); text-align:center; white-space:nowrap; }
+.sibrow { display:flex; gap:8px; align-items:center; }
+.sibrow .pos { width:22px; flex-shrink:0; text-align:right; font:600 15px var(--font-serif); color:var(--gilt); }
+.sibrow .mv { display:flex; flex-direction:column; gap:2px; }
+.sibrow .mv .btn { width:32px; min-height:26px; padding:0; }
+.mres { display:flex; gap:10px; align-items:center; width:100%; text-align:left; padding:8px 10px; border:1px solid var(--rule); border-radius:var(--radius-sm); background:var(--paper-raised); cursor:pointer; color:var(--ink); }
+.mres:hover { background:var(--paper-sunk); }
+.phs { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; }
+.ph { margin:0; border:1px solid var(--rule); border-radius:var(--radius-md); background:var(--paper); overflow:hidden; display:flex; flex-direction:column; }
+.ph.primary { border:2px solid var(--gilt); }
+.ph img { width:100%; height:130px; object-fit:cover; background:var(--paper-sunk); display:block; }
+.ph figcaption { padding:8px 10px; font-size:13px; line-height:18px; display:flex; flex-direction:column; gap:6px; }
+.ph .acts { display:flex; gap:4px; flex-wrap:wrap; }
+.phgrp { display:flex; flex-direction:column; gap:10px; padding-top:14px; border-top:1px solid var(--rule); }
+.phgrp:first-of-type { border-top:0; padding-top:0; }
+.phgrp h3 { font-size:15px; line-height:20px; font-weight:600; margin:0; }
+.phform { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1.6fr) 110px; gap:12px; align-items:end; padding:12px; border:1px dashed var(--rule-strong); border-radius:var(--radius-sm); background:var(--paper); }
+.clan-banner { width:calc(100% + 48px); margin:-24px -24px 0; height:140px; object-fit:cover; border-radius:var(--radius-md) var(--radius-md) 0 0; display:block; }
+.oln .othumb { width:28px; height:28px; border-radius:var(--radius-sm); object-fit:cover; align-self:center; flex-shrink:0; background:var(--paper-sunk); }
+.lrow .tr { font-size:13px; font-weight:600; white-space:nowrap; }
+.xclan { position:absolute; height:20px; padding:0 8px; border:1px dashed var(--spouse); border-radius:10px; background:var(--paper-raised); color:var(--spouse); font:600 11px/18px var(--font-sans); white-space:nowrap; cursor:pointer; z-index:2; }
+.xclan:hover { background:var(--paper-sunk); }
+.xclan-print { position:absolute; font:italic 11px/14px var(--font-sans); color:#333; white-space:nowrap; }
+.panel-warn { border:2px solid var(--warn); border-radius:var(--radius-md); padding:16px; display:flex; flex-direction:column; gap:12px; background:var(--warn-soft); }
+@media (max-width: 900px) {
+  .app { flex-direction:column; } .side { width:auto; height:auto; position:static; }
+  main { padding:24px 16px; } .grid3,.grid2 { grid-template-columns:minmax(0,1fr); }
+  .lrow { grid-template-columns:2rem minmax(0,1fr); } .lrow .d, .lrow .f { grid-column:2; justify-content:flex-start; }
+}
+@media print {
+  html, body { background:#fff !important; }
+  .app, .toast { display:none !important; }
+  #print-root { display:block !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="side" aria-label="Main">
+    <div class="brand"><div class="t">Clan Family Tree</div><div class="small muted" id="side-sub">Demo</div></div>
+    <div class="clan-pick" id="clan-pick"></div>
+    <div class="nav" id="nav"></div>
+    <div class="grow"></div>
+    <div class="box">
+      <div class="small" style="font-weight:600">Backup · all clans</div>
+      <div class="small muted" id="backup-when">Never backed up</div>
+      <button class="btn sm" data-act="backup">Download backup</button>
+      <label class="btn sm link" style="cursor:pointer">Restore from file<input type="file" accept="application/json,.json" id="restore" class="sr"></label>
+    </div>
+    <div class="row" style="padding:0 4px">
+      <button class="btn sm" data-act="theme" id="theme-btn">Dark theme</button>
+      <button class="btn sm link" data-act="reset">Reset demo</button>
+    </div>
+  </nav>
+  <main id="main" tabindex="-1"></main>
+</div>
+<div id="print-root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+'use strict';
+/* ================= data ================= */
+var KEY = 'clan-family-tree-demo-v2', OLD_KEY = 'clan-family-tree-demo-v1';
+var S = { clans: [], people: [], marriages: [], next: 1, lastBackup: null, theme: 'paper', currentClan: null };
+var memoryOnly = false;
+var FIELDS = ['clan_id','given_name','middle_name','last_name','suffix','nickname','sex','is_living','birth_date','birth_date_text','birth_place','death_date','death_date_text','death_place','occupation','residence','phone','email','photo','notes','father_id','mother_id','father_relation','mother_relation','parentage_note','hide_second_parent','clan_parent','generation','is_subclan_head','subclan_name','sibling_order'];
+var PHOTO_KINDS = { portrait: 'Portrait', family: 'Family picture', subclan_group: 'Subclan group photo', clan_group: 'Clan group photo' };
+
+function blankPerson() {
+  var p = {}; FIELDS.forEach(function (f) { p[f] = null; });
+  delete p.photo;
+  p.sex = 'unknown'; p.father_relation = 'biological'; p.mother_relation = 'biological'; p.hide_second_parent = false; p.is_subclan_head = false; p.sibling_order = 1;
+  return p;
+}
+/* ---- photos: records live in S.photos; web-sized image bytes live in IndexedDB (localStorage is too small) ---- */
+var IMG = {}, IDB = null, IDB_OK = false;
+function idbOpen() { return new Promise(function (res, rej) { try { var r = indexedDB.open('clan-family-tree-photos', 1); r.onupgradeneeded = function () { r.result.createObjectStore('img'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; } catch (e) { rej(e); } }); }
+function idbAll(db) { return new Promise(function (res, rej) { var out = {}; var req = db.transaction('img', 'readonly').objectStore('img').openCursor(); req.onsuccess = function () { var c = req.result; if (c) { out[c.key] = c.value; c.continue(); } else res(out); }; req.onerror = function () { rej(req.error); }; }); }
+function imgPut(id, data) { IMG[id] = data; if (IDB_OK) { try { IDB.transaction('img', 'readwrite').objectStore('img').put(data, id); } catch (e) { toast('Could not store the image.'); } } }
+function imgDel(id) { delete IMG[id]; if (IDB_OK) { try { IDB.transaction('img', 'readwrite').objectStore('img').delete(id); } catch (e) {} } }
+function imgClearAll() { IMG = {}; if (IDB_OK) { try { IDB.transaction('img', 'readwrite').objectStore('img').clear(); } catch (e) {} } }
+function save() {
+  FAM = null;
+  if (!S.photos) S.photos = [];
+  if (!IDB_OK) S.imgInline = IMG; else delete S.imgInline;
+  if (memoryOnly) return;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { toast('Could not save in this browser (storage full or blocked). Download a backup now.'); }
+}
+/* v1 (single clan, is_founder flag, founders = Gen 0) → v2 */
+function migrateV1(d) {
+  var out = { clans: [], people: d.people || [], marriages: d.marriages || [], next: d.next || 1, lastBackup: d.lastBackup || null, theme: d.theme || 'paper', currentClan: null };
+  var cid = out.next++;
+  var founders = out.people.filter(function (p) { return p.is_founder; });
+  out.clans.push({ id: cid, name: 'My clan', founder_id: founders[0] ? founders[0].id : null, founder_spouse_id: founders[1] ? founders[1].id : null, origin_place: null, notes: 'Imported from the first version of the demo.', deleted_at: null });
+  out.people.forEach(function (p) { p.clan_id = cid; delete p.is_founder; if (p.is_subclan_head == null) p.is_subclan_head = false; if (p.subclan_name === undefined) p.subclan_name = null; });
+  out.currentClan = cid;
+  return out;
+}
+function load() {
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { RAW_BEFORE = raw; S = JSON.parse(raw); ORDER_ADDED = ensureOrder(); if (ORDER_ADDED) save(); return 'v2'; }
+    var old = localStorage.getItem(OLD_KEY);
+    if (old) { RAW_BEFORE = old; S = migrateV1(JSON.parse(old)); ORDER_ADDED = ensureOrder(); S.clans.forEach(function (c) { recomputeClan(c.id); }); save(); return 'migrated'; }
+  } catch (e) { memoryOnly = true; }
+  return null;
+}
+var ORDER_ADDED = 0, RAW_BEFORE = null;
+/* One-time upgrade for data saved before sibling_order existed: births were the only hint, used once, never again. */
+function ensureOrder() {
+  var missing = S.people.filter(function (p) { return p.sibling_order == null; }).length;
+  if (!missing) return 0;
+  var groups = {};
+  S.people.forEach(function (p) {
+    if (!hasParents(p)) { if (p.sibling_order == null) p.sibling_order = 1; return; }
+    var k = setKey(p.father_id, p.mother_id); (groups[k] = groups[k] || []).push(p);
+  });
+  Object.keys(groups).forEach(function (k) {
+    groups[k].sort(function (a, b) { return (a.sibling_order != null ? a.sibling_order : 1e6) - (b.sibling_order != null ? b.sibling_order : 1e6) || yearOf(a) - yearOf(b) || a.id - b.id; })
+      .forEach(function (p, i) { p.sibling_order = i + 1; });
+  });
+  return missing;
+}
+function addPerson(o) { var p = Object.assign(blankPerson(), o); if (o.sibling_order == null) p.sibling_order = hasParents(p) ? nextOrder(p.father_id, p.mother_id) : 1; p.id = S.next++; S.people.push(p); return p; }
+function addMarriage(o) { var m = Object.assign({ husband_id: null, wife_id: null, date: null, date_text: null, place: null, status: 'married', notes: null }, o); m.id = S.next++; S.marriages.push(m); return m; }
+function addClan(o) { var c = Object.assign({ name: '', founder_id: null, founder_spouse_id: null, origin_place: null, notes: null, deleted_at: null }, o); c.id = S.next++; S.clans.push(c); return c; }
+
+function seed() {
+  S = { clans: [], people: [], marriages: [], photos: [], next: 1, lastBackup: null, theme: S.theme || 'paper', currentClan: null };
+  imgClearAll();
+  /* ---- Santos clan ---- */
+  var sc = addClan({ name: 'Santos', origin_place: 'San Roque', notes: 'Transcribed from the handwritten family book. Page numbers are noted on each person where known.' });
+  var C = sc.id;
+  var P = function (o) { return addPerson(Object.assign({ clan_id: C }, o)).id; };
+  var kid = function (o, f, m, clan) { return P(Object.assign({ father_id: f || null, mother_id: m || null, clan_parent: clan || 'father' }, o)); };
+  var isko = P({ given_name: 'Isko', sex: 'male', is_living: false, notes: 'Known by one name only, as on the first page of the record.' });
+  var sela = P({ given_name: 'Sela', sex: 'female', is_living: false });
+  sc.founder_id = isko; sc.founder_spouse_id = sela;
+  addMarriage({ husband_id: isko, wife_id: sela, date_text: 'before 1860', status: 'widowed' });
+  var juan = kid({ given_name: 'Juan', last_name: 'Santos', sex: 'male', is_living: false, birth_date: '1862-01-01', birth_date_text: 'abt. 1862', death_date: '1931-01-01', death_date_text: '1931' }, isko, sela);
+  var petra = P({ given_name: 'Petra', last_name: 'Lim', sex: 'female', is_living: false, birth_date_text: '1866', death_date_text: '1944' });
+  addMarriage({ husband_id: juan, wife_id: petra, date: '1890-01-01', date_text: '1890', place: 'San Roque', status: 'widowed' });
+  var tomas = kid({ given_name: 'Tomas', last_name: 'Santos', sex: 'male', is_living: false, birth_date: '1865-01-01', birth_date_text: '1865', death_date_text: '1940' }, isko, sela);
+  var ambo = kid({ given_name: 'Ambo', sex: 'male', is_living: false, notes: 'Died young. Remembered at the 2019 reunion: “there was one before Juan.” No dates.' }, isko, sela);
+  placeInSet(byId(ambo), 1);
+  var rosa = kid({ given_name: 'Rosa', last_name: 'Santos', sex: 'female', is_living: false, birth_date: '1869-01-01', birth_date_text: '1869', death_date_text: '1950', is_subclan_head: true, subclan_name: 'Reyes branch' }, isko, sela);
+  var ignacio = P({ given_name: 'Ignacio', last_name: 'Reyes', sex: 'male', is_living: false });
+  addMarriage({ husband_id: ignacio, wife_id: rosa, date: '1893-01-01', date_text: '1893', status: 'widowed' });
+  var mc = kid({ given_name: 'Maria Clara', last_name: 'Santos', sex: 'female', is_living: false, birth_date: '1898-01-01', birth_date_text: '1898', death_date_text: '1971' }, juan, petra);
+  var pedroC = P({ given_name: 'Pedro', last_name: 'Cruz', sex: 'male', is_living: false, birth_date_text: '1893', death_date_text: '1960' });
+  addMarriage({ husband_id: pedroC, wife_id: mc, date_text: '1920', date: '1920-01-01', status: 'widowed' });
+  var andres = kid({ given_name: 'Andres', last_name: 'Santos', nickname: 'Ando', sex: 'male', is_living: false, birth_date: '1901-01-01', birth_date_text: 'abt. 1901', birth_place: 'San Roque', death_date: '1988-03-14', death_date_text: '14 Mar 1988', death_place: 'Manila', occupation: 'Carpenter', is_subclan_head: true, subclan_name: 'Ando’s line', notes: 'Built the chapel at San Roque with his brothers-in-law. Called “Ando” by everyone but his mother.' }, juan, petra);
+  var lucia = P({ given_name: 'Lucia', last_name: 'Reyes', sex: 'female', is_living: false, birth_date_text: '1905', death_date_text: '1979' });
+  addMarriage({ husband_id: andres, wife_id: lucia, date: '1926-01-01', date_text: '1926', place: 'San Roque', status: 'widowed' });
+  kid({ given_name: 'Carmen', last_name: 'Reyes', sex: 'female', is_living: false, birth_date: '1895-01-01', birth_date_text: '1895', death_date_text: '1970' }, ignacio, rosa, 'mother');
+  kid({ given_name: 'Vicente', last_name: 'Reyes', sex: 'male', is_living: false, birth_date: '1899-01-01', birth_date_text: '1899', death_date_text: '1962' }, ignacio, rosa, 'mother');
+  kid({ given_name: 'Pilar', last_name: 'Santos', sex: 'female', is_living: false, birth_date: '1905-01-01', birth_date_text: '1905', death_date_text: '1977', father_relation: 'adopted', parentage_note: 'Taken in by Tomas after the flood of 1910.' }, tomas, null);
+  kid({ given_name: 'Josefa', last_name: 'Cruz', sex: 'female', is_living: false, birth_date: '1921-01-01', birth_date_text: '1921', death_date_text: '2010' }, pedroC, mc, 'mother');
+  kid({ given_name: 'Benito', last_name: 'Cruz', sex: 'male', is_living: false, birth_date: '1924-01-01', birth_date_text: '1924', death_date_text: '1991' }, pedroC, mc, 'mother');
+  var teo = kid({ given_name: 'Teodoro', last_name: 'Santos', sex: 'male', is_living: false, birth_date: '1928-03-02', birth_date_text: '1928', death_date_text: '2004' }, andres, lucia);
+  kid({ given_name: 'Elena', last_name: 'Santos', nickname: 'Lenny', sex: 'female', is_living: false, birth_date: '1931-01-01', birth_date_text: '1931', death_date_text: '2019' }, andres, lucia);
+  kid({ given_name: 'Ramon', last_name: 'Santos', sex: 'male', is_living: false, birth_date: '1934-01-01', birth_date_text: 'abt. 1934', death_date_text: '1999' }, andres, lucia);
+  var amparo = P({ given_name: 'Amparo', last_name: 'Diaz', sex: 'female', is_living: false, birth_date_text: '1932', death_date_text: '2015' });
+  addMarriage({ husband_id: teo, wife_id: amparo, date: '1955-01-01', date_text: '1955', status: 'widowed' });
+  kid({ given_name: 'Andres', last_name: 'Santos', sex: 'male', is_living: true, birth_date: '1956-06-01', birth_date_text: '1956', residence: 'Quezon City' }, teo, amparo);
+  var liza = kid({ given_name: 'Liza', last_name: 'Santos', sex: 'female', is_living: true, birth_date: '1958-01-01', birth_date_text: '1958' }, teo, amparo);
+  var marco = kid({ given_name: 'Marco', last_name: 'Santos', sex: 'male', is_living: true, birth_date: '1961-01-01', birth_date_text: '1961' }, teo, amparo);
+  var paolo = kid({ given_name: 'Paolo', last_name: 'Santos', sex: 'male', is_living: true, birth_date: '1990-01-01', birth_date_text: '1990', parentage_note: 'Mother not named at the family’s request.' }, marco, null);
+  P({ given_name: 'Tomasa', nickname: 'Masang', sex: 'female', birth_date_text: 'before the war', notes: 'From page 14 — parents not yet read.' });
+  P({ given_name: 'Nicolas', sex: 'male', birth_date_text: 'abt. 1910' });
+
+  /* ---- Dulnuan clan (intermarries with Santos) ---- */
+  var dc = addClan({ name: 'Dulnuan', origin_place: 'Kiangan', notes: 'Oral history from the elders, recorded at the 2019 reunion.' });
+  C = dc.id;
+  var pablo = P({ given_name: 'Pablo', last_name: 'Dulnuan', sex: 'male', is_living: false, birth_date_text: 'abt. 1880' });
+  var ines = P({ given_name: 'Ines', sex: 'female', is_living: false });
+  dc.founder_id = pablo; dc.founder_spouse_id = ines;
+  addMarriage({ husband_id: pablo, wife_id: ines, date_text: 'abt. 1905', status: 'widowed' });
+  var pedroD = kid({ given_name: 'Pedro', last_name: 'Dulnuan', sex: 'male', is_living: false, birth_date: '1910-01-01', birth_date_text: '1910', death_date_text: '1985', is_subclan_head: true, subclan_name: 'Pedro’s line' }, pablo, ines);
+  var mariaD = kid({ given_name: 'Maria', last_name: 'Dulnuan', sex: 'female', is_living: false, birth_date: '1913-01-01', birth_date_text: '1913', death_date_text: '1990' }, pablo, ines);
+  var carmenB = P({ given_name: 'Carmen', last_name: 'Bautista', sex: 'female', is_living: false, birth_date_text: '1915' });
+  addMarriage({ husband_id: pedroD, wife_id: carmenB, date_text: '1936', date: '1936-01-01', status: 'widowed' });
+  var jose = P({ given_name: 'Jose', last_name: 'Aquino', sex: 'male', is_living: false });
+  addMarriage({ husband_id: jose, wife_id: mariaD, date_text: '1938', date: '1938-01-01', status: 'widowed' });
+  kid({ given_name: 'Rosario', last_name: 'Aquino', sex: 'female', is_living: false, birth_date: '1940-01-01', birth_date_text: '1940', death_date_text: '2012' }, jose, mariaD, 'mother');
+  var lito = kid({ given_name: 'Lito', last_name: 'Dulnuan', sex: 'male', is_living: false, birth_date: '1938-01-01', birth_date_text: '1938', death_date_text: '2001' }, pedroD, carmenB);
+  var benjie = kid({ given_name: 'Benjamin', last_name: 'Dulnuan', nickname: 'Benjie', sex: 'male', is_living: true, birth_date: '1955-01-01', birth_date_text: '1955' }, pedroD, carmenB);
+  kid({ given_name: 'Grace', last_name: 'Dulnuan', sex: 'female', is_living: false, birth_date: '1962-01-01', birth_date_text: '1962', death_date_text: '2020' }, lito, null);
+  // cross-clan marriage: Benjie (Dulnuan) = Liza (Santos). Children are Dulnuan through their father.
+  addMarriage({ husband_id: benjie, wife_id: liza, date: '1982-05-01', date_text: 'May 1982', place: 'San Roque', status: 'married' });
+  kid({ given_name: 'Mark', last_name: 'Dulnuan', sex: 'male', is_living: true, birth_date: '1984-01-01', birth_date_text: '1984' }, benjie, liza);
+  kid({ given_name: 'Ana', last_name: 'Dulnuan', sex: 'female', is_living: true, birth_date: '1987-01-01', birth_date_text: '1987', notes: 'Twin of Joy — Ana is the elder by the family’s account.' }, benjie, liza);
+  kid({ given_name: 'Joy', last_name: 'Dulnuan', sex: 'female', is_living: true, birth_date: '1987-01-01', birth_date_text: '1987', notes: 'Twin of Ana.' }, benjie, liza);
+  P({ given_name: 'Tomas', last_name: 'Dulnuan', sex: 'male', birth_date_text: 'abt. 1935', notes: 'Named by an elder at the reunion; parents not confirmed.' });
+
+  /* ---- Menis clan (intermarries with Santos) ---- */
+  var mn = addClan({ name: 'Menis', origin_place: 'Tagudin', notes: 'Recorded from Annie Claire’s family.' });
+  C = mn.id;
+  var ramonM = P({ given_name: 'Ramon', last_name: 'Menis', sex: 'male', is_living: false, birth_date_text: 'abt. 1935' });
+  var claraM = P({ given_name: 'Clara', sex: 'female', is_living: true, birth_date_text: '1940' });
+  mn.founder_id = ramonM; mn.founder_spouse_id = claraM;
+  addMarriage({ husband_id: ramonM, wife_id: claraM, date_text: '1960', status: 'widowed' });
+  var annie = kid({ given_name: 'Annie Claire', last_name: 'Menis', sex: 'female', is_living: true, birth_date: '1992-01-01', birth_date_text: '1992' }, ramonM, claraM);
+  kid({ given_name: 'Jun', last_name: 'Menis', sex: 'male', is_living: true, birth_date_text: '1995' }, ramonM, claraM);
+  addMarriage({ husband_id: paolo, wife_id: annie, date: '2015-06-01', date_text: 'June 2015', status: 'married' });
+  // three children of one couple: one recorded on Paolo's (Santos) line, two on Annie's (Menis) line
+  kid({ clan_id: sc.id, given_name: 'Luis', last_name: 'Santos', sex: 'male', is_living: true, birth_date_text: '2016' }, paolo, annie, 'father');
+  kid({ given_name: 'Bea', last_name: 'Santos', sex: 'female', is_living: true, birth_date_text: '2018' }, paolo, annie, 'mother');
+  kid({ given_name: 'Carlo', last_name: 'Santos', sex: 'male', is_living: true, birth_date_text: '2021' }, paolo, annie, 'mother');
+
+  S.clans.forEach(function (c) { recomputeClan(c.id); });
+  S.currentClan = sc.id;
+  save();
+}
+
+/* ================= queries ================= */
+function byId(id) { if (id == null || id === '') return null; for (var i = 0; i < S.people.length; i++) if (S.people[i].id === +id) return S.people[i]; return null; }
+function mById(id) { for (var i = 0; i < S.marriages.length; i++) if (S.marriages[i].id === +id) return S.marriages[i]; return null; }
+function clanById(id) { for (var i = 0; i < S.clans.length; i++) if (S.clans[i].id === +id) return S.clans[i]; return null; }
+function liveClans() { return S.clans.filter(function (c) { return !c.deleted_at; }).sort(function (a, b) { return a.name.localeCompare(b.name); }); }
+function cur() { var c = clanById(S.currentClan); return c && !c.deleted_at ? c : null; }
+function clanOf(p) { return p ? clanById(p.clan_id) : null; }
+function inClan(cid) { return S.people.filter(function (p) { return p.clan_id === cid; }); }
+function isFounder(p) { var c = clanOf(p); return !!c && (p.id === c.founder_id || p.id === c.founder_spouse_id); }
+function clanParentId(p) {
+  if (p.clan_parent === 'mother') return p.mother_id || p.father_id;
+  if (p.clan_parent === 'father') return p.father_id || p.mother_id;
+  return p.father_id || p.mother_id;
+}
+function otherParentId(p) { var c = clanParentId(p); if (!c) return null; return c === p.father_id ? p.mother_id : p.father_id; }
+function clanChildren(id) { return orderChildren(S.people.filter(function (p) { return clanParentId(p) === id; }), id); }
+/* §2.6 — siblings are sequenced by sibling_order only. Sets by different spouses are grouped in marriage order, each numbered from 1. */
+function orderChildren(list, parentId) {
+  var sp = marriagesOf(parentId).map(function (m) { return spouseIn(m, parentId); });
+  var rank = function (c) { var o = c.father_id === parentId ? c.mother_id : c.father_id; if (o == null) return 1e6; var i = sp.indexOf(o); return i >= 0 ? i : 5e5 + o; };
+  return list.sort(function (a, b) { return rank(a) - rank(b) || a.sibling_order - b.sibling_order || a.id - b.id; });
+}
+function setKey(f, m) { return (f || 0) + ':' + (m || 0); }
+function setMembers(f, m) {
+  if (!f && !m) return [];
+  return S.people.filter(function (x) { return (x.father_id || null) === (f || null) && (x.mother_id || null) === (m || null); })
+    .sort(function (a, b) { return a.sibling_order - b.sibling_order || a.id - b.id; });
+}
+function siblingsOf(p) { return setMembers(p.father_id, p.mother_id); }
+function nextOrder(f, m) { return setMembers(f, m).length + 1; }
+function normalizeSet(f, m) { setMembers(f, m).forEach(function (x, i) { x.sibling_order = i + 1; }); }
+/* Dense 1…n: inserting renumbers the rest of the set. */
+function placeInSet(p, pos) {
+  var list = siblingsOf(p).filter(function (x) { return x.id !== p.id; });
+  pos = pos ? Math.max(1, Math.min(list.length + 1, pos)) : list.length + 1;
+  list.splice(pos - 1, 0, p);
+  list.forEach(function (x, i) { x.sibling_order = i + 1; });
+}
+function moveSibling(p, dir) {
+  var list = siblingsOf(p); var i = list.indexOf(p), j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return false;
+  list.splice(i, 1); list.splice(j, 0, p);
+  list.forEach(function (x, k) { x.sibling_order = k + 1; });
+  return true;
+}
+function childrenOf(id, showHidden) {
+  return orderChildren(S.people.filter(function (p) {
+    if (p.father_id !== id && p.mother_id !== id) return false;
+    if (!showHidden && p.hide_second_parent && otherParentId(p) === id) return false;
+    return true;
+  }), id);
+}
+function marriagesOf(id) { return S.marriages.filter(function (m) { return m.husband_id === id || m.wife_id === id; }).sort(function (a, b) { return (a.date || '9999').localeCompare(b.date || '9999'); }); }
+function spouseIn(m, id) { return m.husband_id === id ? m.wife_id : m.husband_id; }
+function spousesOf(id) { return marriagesOf(id).map(function (m) { return byId(spouseIn(m, id)); }).filter(Boolean); }
+/* Direct children are a fact about the person, so never scoped; the tree only points at them. */
+function crossClanKids(personId, treeClanId) {
+  var groups = {}, order = [];
+  childrenOf(personId).forEach(function (k) {
+    if (k.clan_id === treeClanId) return;
+    var c = clanOf(k); if (!c || c.deleted_at) return;
+    if (!groups[k.clan_id]) { groups[k.clan_id] = { clan: c, kids: [], via: clanParentId(k) }; order.push(k.clan_id); }
+    groups[k.clan_id].kids.push(k);
+  });
+  return order.map(function (id) { return groups[id]; });
+}
+function xLabel(g) { return g.kids.length + (g.kids.length === 1 ? ' child' : ' children') + ' in the ' + clanLabel(g.clan); }
+function hasParents(p) { return !!(p.father_id || p.mother_id); }
+function isMarriedIn(p) { return !isFounder(p) && !hasParents(p) && marriagesOf(p.id).length > 0; }
+function isUnplaced(p) { return !isFounder(p) && !hasParents(p) && marriagesOf(p.id).length === 0; }
+function yearOf(p) { if (p.birth_date) return +p.birth_date.slice(0, 4); var m = /(\d{4})/.exec(p.birth_date_text || ''); return m ? +m[1] : 99999; }
+/* Generation, then family order (the tree read top to bottom, siblings in sibling_order). Never dates. */
+var FAM = null;
+function famIdx() {
+  if (FAM) return FAM;
+  FAM = {}; var i = 0, seen = {};
+  var walk = function (p) { if (!p || seen[p.id]) return; seen[p.id] = true; FAM[p.id] = i++; spousesOf(p.id).forEach(function (s) { if (!(s.id in FAM)) FAM[s.id] = i++; }); clanChildren(p.id).forEach(walk); };
+  S.clans.forEach(function (c) { walk(byId(c.founder_id)); walk(byId(c.founder_spouse_id)); });
+  return FAM;
+}
+function bySort(a, b) {
+  var ga = a.generation == null ? 999 : a.generation, gb = b.generation == null ? 999 : b.generation;
+  if (ga !== gb) return ga - gb;
+  var f = famIdx(), fa = a.id in f ? f[a.id] : 1e9, fb = b.id in f ? f[b.id] : 1e9;
+  if (fa !== fb) return fa - fb;
+  return fullName(a).localeCompare(fullName(b));
+}
+function recomputeClan(cid) {
+  var c = clanById(cid); var ppl = inClan(cid);
+  ppl.forEach(function (p) { p.generation = null; });
+  if (!c) return 0;
+  var queue = [byId(c.founder_id), byId(c.founder_spouse_id)].filter(function (p) { return p && p.clan_id === cid; });
+  queue.forEach(function (p) { p.generation = 1; });
+  var guard = 0;
+  while (queue.length && guard++ < 200000) {
+    var x = queue.shift();
+    ppl.forEach(function (k) { if (clanParentId(k) === x.id && k.generation == null) { k.generation = x.generation + 1; queue.push(k); } });
+  }
+  return ppl.filter(function (p) { return p.generation != null; }).length;
+}
+/* Local update on save: this person and the people below them only. */
+function updateSubtree(p, seen) {
+  seen = seen || {}; if (seen[p.id]) return; seen[p.id] = true;
+  if (isFounder(p)) p.generation = 1;
+  else { var cp = byId(clanParentId(p)); p.generation = cp && cp.clan_id === p.clan_id && cp.generation != null ? cp.generation + 1 : null; }
+  clanChildren(p.id).forEach(function (k) { if (k.clan_id === p.clan_id) updateSubtree(k, seen); });
+}
+function ancestors(id, seen) {
+  seen = seen || {}; var p = byId(id); if (!p) return seen;
+  [p.father_id, p.mother_id].forEach(function (a) { if (a && !seen[a]) { seen[a] = true; ancestors(a, seen); } });
+  return seen;
+}
+function wouldCycle(childId, parentId) { if (!childId || !parentId) return false; if (childId === parentId) return true; return !!ancestors(parentId)[childId]; }
+/* Descent walks father_id / mother_id downward and never filters on clan_id (§2.7). */
+function descendants(rootId) {
+  var set = {}; var q = [rootId]; set[rootId] = true;
+  while (q.length) { var x = q.shift(); childrenOf(x).forEach(function (k) { if (!set[k.id]) { set[k.id] = true; q.push(k.id); } }); }
+  return set;
+}
+/* The one generation-display helper (§5): absolute, or relative to a chosen root (root = Gen 0). */
+function genNum(p, rootId) {
+  if (!p || p.generation == null) return null;
+  if (!rootId) return p.generation;
+  var r = byId(rootId);
+  if (!r || r.generation == null || r.clan_id !== p.clan_id) return null;
+  var d = p.generation - r.generation;
+  return d >= 0 ? d : null;
+}
+function subclanHeads(cid) { return inClan(cid).filter(function (p) { return p.is_subclan_head && p.generation != null; }).sort(bySort); }
+
+/* ================= photos (§2.11) ================= */
+/* key: 'p:<person>' (portrait, subclan group, family of a solo parent), 'm:<marriage>' (family), 'c:<clan>' (clan group) */
+function photosOf(kind, key) {
+  var t = key.charAt(0), n = +key.slice(2);
+  return (S.photos || []).filter(function (ph) {
+    if (ph.kind !== kind) return false;
+    if (t === 'm') return ph.marriage_id === n;
+    if (t === 'c') return ph.clan_id === n && !ph.person_id && !ph.marriage_id;
+    return ph.person_id === n && !ph.marriage_id;
+  }).sort(function (a, b) { return (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0) || (a.year || 9999) - (b.year || 9999) || a.id - b.id; });
+}
+function primaryPhoto(kind, key) { var l = photosOf(kind, key); return l.length && IMG[l[0].id] ? l[0] : null; }
+function phCaption(ph) { return [ph.caption, ph.year ? '(' + ph.year + ')' : ''].filter(Boolean).join(' '); }
+function migratePhotos() {
+  if (!S.photos) S.photos = [];
+  var n = 0;
+  S.people.forEach(function (p) {
+    if (p.photo) { var id = S.next++; S.photos.push({ id: id, clan_id: p.clan_id, person_id: p.id, marriage_id: null, kind: 'portrait', caption: null, year: null, is_primary: true, w: null, h: null }); imgPut(id, p.photo); n++; }
+    delete p.photo;
+  });
+  if (n) save();
+  return n;
+}
+function resizeImg(file, max) {
+  return new Promise(function (res, rej) {
+    var r = new FileReader(); r.onerror = rej;
+    r.onload = function () { var img = new Image(); img.onerror = rej; img.onload = function () { var s0 = Math.min(1, max / Math.max(img.width, img.height)); var cv = document.createElement('canvas'); cv.width = Math.round(img.width * s0); cv.height = Math.round(img.height * s0); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); res({ data: cv.toDataURL('image/jpeg', 0.82), w: cv.width, h: cv.height }); }; img.src = r.result; };
+    r.readAsDataURL(file);
+  });
+}
+var PH = { add: null, edit: null };
+function photoPanel(kind, key, title, clanId) {
+  var list = photosOf(kind, key), k = kind + '|' + key;
+  var group = kind !== 'portrait';
+  var form = PH.add === k ? '<form class="phform" data-kind="' + kind + '" data-key="' + key + '" data-clan="' + clanId + '" novalidate>' +
+    '<div class="field"><label class="label" for="ph-file">Image</label><input id="ph-file" name="file" type="file" accept="image/*" class="small"></div>' +
+    '<div class="field"><label class="label" for="ph-cap">Caption</label><input class="input" id="ph-cap" name="caption" placeholder="' + (group ? 'Back row, L–R: … · Front row, L–R: …' : 'Where and when, who took it') + '"></div>' +
+    '<div class="field"><label class="label" for="ph-year">Year</label><input class="input" id="ph-year" name="year" inputmode="numeric" maxlength="4" placeholder="1998"></div>' +
+    '<div class="row" style="grid-column:1/-1"><span class="small muted" style="flex-grow:1">Saved as a web-sized copy. Keep the camera original outside the app.' + (list.length ? '' : ' The first photo becomes the main one.') + '</span><button type="button" class="btn sm" data-act="ph-cancel">Cancel</button><button class="btn sm primary">Save photo</button></div></form>' : '';
+  var cards = list.map(function (ph) {
+    var src = IMG[ph.id];
+    if (PH.edit === ph.id) return '<figure class="ph' + (ph.is_primary ? ' primary' : '') + '">' + (src ? '<img src="' + src + '" alt="">' : '') + '<figcaption><form class="stack" style="gap:6px" data-ph-edit="' + ph.id + '"><label class="sub" for="phe-c">Caption</label><textarea class="input" id="phe-c" name="caption" style="min-height:60px">' + esc(ph.caption) + '</textarea><label class="sub" for="phe-y">Year</label><input class="input" id="phe-y" name="year" value="' + esc(ph.year) + '" maxlength="4" inputmode="numeric"><div class="acts"><button type="button" class="btn sm" data-act="ph-cancel">Cancel</button><button class="btn sm primary">Save</button></div></form></figcaption></figure>';
+    return '<figure class="ph' + (ph.is_primary ? ' primary' : '') + '">' + (src ? '<img src="' + src + '" alt="' + esc(ph.caption || PHOTO_KINDS[kind]) + '">' : '<div style="height:130px;display:grid;place-items:center" class="small muted">Image missing</div>') +
+      '<figcaption>' + (ph.is_primary ? '<span class="badge gilt" style="align-self:flex-start">Main picture</span>' : '') + '<span>' + (ph.year ? '<b>' + esc(ph.year) + '</b> · ' : '<span class="muted">No year · </span>') + esc(ph.caption || '') + '</span>' +
+      '<div class="acts">' + (ph.is_primary ? '' : '<button type="button" class="btn sm" data-act="ph-primary" data-id="' + ph.id + '">Make main</button>') + '<button type="button" class="btn sm" data-act="ph-edit" data-id="' + ph.id + '">Edit</button><button type="button" class="btn sm link" data-act="ph-del" data-id="' + ph.id + '" style="color:var(--danger)">Delete</button></div></figcaption></figure>';
+  }).join('');
+  return '<div class="phgrp"><div class="row"><h3 style="flex-grow:1">' + title + '</h3><span class="small muted">' + list.length + ' photo' + (list.length === 1 ? '' : 's') + '</span>' + (PH.add === k ? '' : '<button type="button" class="btn sm" data-act="ph-add" data-k="' + k + '">Add photo</button>') + '</div>' + form +
+    (list.length ? '<div class="phs">' + cards + '</div>' : (PH.add === k ? '' : '<p class="small muted" style="margin:0">None yet.</p>')) + '</div>';
+}
+
+/* ================= formatting ================= */
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function fmtDate(iso) { if (!iso) return ''; var d = iso.split('-'); if (d.length < 3) return iso; if (d[1] === '01' && d[2] === '01') return d[0]; return (+d[2]) + ' ' + MON[+d[1] - 1] + ' ' + d[0]; }
+function longDate(d) { return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
+function fullName(p) { return p ? [p.given_name, p.middle_name, p.last_name, p.suffix].filter(Boolean).join(' ') : ''; }
+function nameHtml(p) { return esc(fullName(p)) + (p.nickname ? ' <span class="nk">“' + esc(p.nickname) + '”</span>' : ''); }
+function ev(p, k) { return p[k + '_date_text'] || fmtDate(p[k + '_date']); }
+function life(p) { var b = ev(p, 'birth'), d = ev(p, 'death'); return [b ? 'b. ' + b : '', d ? 'd. ' + d : ''].filter(Boolean).join(' · '); }
+function span(p) { var b = ev(p, 'birth'), d = ev(p, 'death'); if (!b && !d) return ''; if (!d) return p.is_living === false ? b + ' – ?' : 'b. ' + b; return (b || '?') + ' – ' + d; }
+function initials(p) { return (fullName(p).split(/\s+/).filter(Boolean).slice(0, 2).map(function (s) { return s[0]; }).join('') || '?').toUpperCase(); }
+function photoHtml(p, cls) { var ph = primaryPhoto('portrait', 'p:' + p.id); return '<span class="photo ' + (cls || '') + '" aria-hidden="true">' + (ph ? '<img src="' + IMG[ph.id] + '" alt="">' : esc(initials(p))) + '</span>'; }
+function genLabel(g) { return g == null ? '' : 'Gen ' + g; }
+function clanLabel(c) { return c ? c.name + (/\bclan$/i.test(c.name) ? '' : ' clan') : 'No clan'; }
+function foundersText(c) { return [byId(c.founder_id), byId(c.founder_spouse_id)].filter(Boolean).map(fullName).join(' and ') || 'not set'; }
+function optLabel(p, rootId) {
+  var g = genNum(p, rootId);
+  return fullName(p) + (g != null ? ' · Gen ' + g : isMarriedIn(p) ? ' · married in' : ' · unplaced');
+}
+function lineOf(p) { var out = []; var c = p; var guard = 0; while (c && guard++ < 60) { out.unshift(c); var n = byId(clanParentId(c)); c = n && n.clan_id === p.clan_id ? n : null; } return out; }
+/* §4.1 — every printout (and chart) captions its own numbering */
+function caption(c, start, relative) {
+  var parts = [clanLabel(c)];
+  if (relative) parts.push((start.is_subclan_head ? 'subclan of ' : 'descendants of ') + fullName(start) + ' (Gen 0)');
+  else { if (!isFounder(start)) parts.push('branch of ' + fullName(start)); parts.push('Gen 1 = founding couple ' + foundersText(c)); }
+  parts.push('printed ' + longDate(new Date()));
+  return parts.join(' · ');
+}
+
+/* ================= ui helpers ================= */
+var $main = document.getElementById('main');
+var tt;
+function toast(msg) { var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(function () { t.classList.remove('on'); }, 3600); }
+function go(h) { location.hash = h; }
+function route() {
+  var h = location.hash.replace(/^#\/?/, '') || 'clans';
+  var q = {}; var qi = h.indexOf('?');
+  if (qi >= 0) { h.slice(qi + 1).split('&').forEach(function (kv) { var a = kv.split('='); q[a[0]] = decodeURIComponent(a[1] || ''); }); h = h.slice(0, qi); }
+  var parts = h.split('/');
+  return { name: parts[0], id: parts[1] ? +parts[1] : null, q: q };
+}
+function sel(v, o) { return String(v) === String(o) ? ' selected' : ''; }
+function opt(p, selected, rootId) { return '<option value="' + p.id + '"' + (p.id === selected ? ' selected' : '') + '>' + esc(optLabel(p, rootId)) + '</option>'; }
+function personOptions(selected, excludeId, filter, cid) {
+  cid = cid || S.currentClan;
+  return inClan(cid).filter(function (p) { return p.id !== excludeId && (!filter || filter(p)); }).sort(bySort).map(function (p) { return opt(p, selected); }).join('');
+}
+function personOptionsAllClans(selected, excludeId) {
+  var cs = liveClans().sort(function (a, b) { return (b.id === S.currentClan) - (a.id === S.currentClan); });
+  return cs.map(function (c) {
+    var list = inClan(c.id).filter(function (p) { return p.id !== excludeId; }).sort(bySort);
+    return list.length ? '<optgroup label="' + esc(clanLabel(c)) + '">' + list.map(function (p) { return '<option value="' + p.id + '"' + (p.id === selected ? ' selected' : '') + '>' + esc(optLabel(p) + (c.id !== S.currentClan ? ' · ' + c.name : '')) + '</option>'; }).join('') + '</optgroup>' : '';
+  }).join('');
+}
+/* Start-person dropdown: founding couple, marked subclan heads, then everyone placed (§2.5, §4) */
+function startOptions(selected, cid) {
+  var c = clanById(cid);
+  var f = [byId(c.founder_id)].filter(function (p) { return p && p.generation != null; });
+  var heads = subclanHeads(cid);
+  var rest = inClan(cid).filter(function (p) { return p.generation != null && f.indexOf(p) < 0 && heads.indexOf(p) < 0; }).sort(bySort);
+  var o = function (p, label) { return '<option value="' + p.id + '"' + (p.id === selected ? ' selected' : '') + '>' + esc(label) + '</option>'; };
+  return (f.length ? '<optgroup label="Founding couple">' + f.map(function (p) { return o(p, foundersText(c) + ' · Gen 1'); }).join('') + '</optgroup>' : '') +
+    (heads.length ? '<optgroup label="Subclan heads">' + heads.map(function (p) { return o(p, (p.subclan_name ? p.subclan_name + ' — ' : '') + fullName(p) + ' · Gen ' + p.generation); }).join('') + '</optgroup>' : '') +
+    '<optgroup label="Anyone in the tree">' + rest.map(function (p) { return o(p, optLabel(p)); }).join('') + '</optgroup>';
+}
+function relSelect(name, val, id) {
+  return '<select class="input" name="' + name + '" id="' + id + '">' + ['biological','adopted','step','foster'].map(function (r) { return '<option value="' + r + '"' + sel(val || 'biological', r) + '>' + r[0].toUpperCase() + r.slice(1) + '</option>'; }).join('') + '</select>';
+}
+function otherClanBadge(p, relTo) { return p && relTo && p.clan_id !== relTo ? ' <span class="badge">' + esc(clanLabel(clanOf(p))) + '</span>' : ''; }
+function pnode(p, opts) {
+  opts = opts || {};
+  var clan = opts.clan != null ? opts.clan : p.generation != null;
+  var other = opts.relTo && p.clan_id !== opts.relTo ? '<span class="dt" style="color:var(--spouse);font-weight:600">' + esc(clanLabel(clanOf(p))) + '</span>' : '';
+  return '<a class="pnode ' + (clan ? 'clan' : '') + '" href="#/person/' + p.id + '">' + photoHtml(p) + '<span class="tx">' + (p.generation != null ? '<span class="gen">' + genLabel(p.generation) + (other ? '' : '') + '</span>' : '') + '<span class="nm">' + nameHtml(p) + '</span>' + (life(p) ? '<span class="dt">' + esc(life(p)) + '</span>' : '') + other + (p.is_living ? '<span class="badge living">Living</span>' : '') + '</span></a>';
+}
+function needClanView() {
+  return '<h1 class="display">Choose a clan</h1><p class="muted">Everything is scoped to one clan. <a href="#/clans">Go to the clan list</a>.</p>';
+}
+
+/* ================= shell ================= */
+var SCOPED = { people: 1, person: 1, 'new': 1, edit: 1, children: 1, tree: 1, outline: 1, print: 1 };
+function renderNav(r) {
+  var c = cur();
+  var clans = liveClans();
+  document.getElementById('clan-pick').innerHTML = clans.length ? '<label class="small muted" for="clan-sel">Clan</label><select class="input" id="clan-sel">' + (c ? '' : '<option value="">— Choose —</option>') + clans.map(function (x) { return '<option value="' + x.id + '"' + sel(S.currentClan, x.id) + '>' + esc(clanLabel(x)) + '</option>'; }).join('') + '</select>' : '';
+  var items = [['clans', 'All clans', '#/clans']];
+  var scoped = c ? [['people', 'People', '#/people'], ['new', 'Add person', '#/new'], ['children', 'Add children', '#/children'], ['tree', 'Tree / Outline', '#/tree'], ['print', 'Print', '#/print'], ['clanedit', 'Clan settings', '#/clanedit/' + c.id]] : [];
+  var unplaced = c ? inClan(c.id).filter(isUnplaced).length : 0;
+  var link = function (it) {
+    var on = r.name === it[0] || (it[0] === 'people' && r.name === 'person') || (it[0] === 'clans' && r.name === 'clannew') || (it[0] === 'tree' && r.name === 'outline');
+    return '<a href="' + it[2] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '><span>' + it[1] + '</span>' + (it[0] === 'people' && unplaced ? '<span class="badge warn">' + unplaced + '</span>' : '') + '</a>';
+  };
+  document.getElementById('nav').innerHTML = items.map(link).join('') + (scoped.length ? '<div class="sep"></div>' + scoped.map(link).join('') : '');
+  document.getElementById('side-sub').textContent = liveClans().length + ' clans · ' + S.people.length + ' people' + (memoryOnly ? ' · not saving' : '');
+  document.getElementById('backup-when').textContent = S.lastBackup ? 'Last: ' + new Date(S.lastBackup).toLocaleString() : 'Never backed up';
+  document.getElementById('theme-btn').textContent = S.theme === 'lamplight' ? 'Light theme' : 'Dark theme';
+}
+function render() {
+  var r = route();
+  document.documentElement.setAttribute('data-theme', S.theme || 'paper');
+  // opening a person from another clan switches the clan (e.g. following a cross-clan spouse)
+  if ((r.name === 'person' || r.name === 'edit') && r.id) { var p = byId(r.id); var pc = clanOf(p); if (p && pc && !pc.deleted_at && p.clan_id !== S.currentClan) { S.currentClan = p.clan_id; save(); toast('Switched to the ' + clanLabel(pc)); } }
+  if ((r.name === 'children' || r.name === 'tree' || r.name === 'outline') && r.id) { var p2 = byId(r.id); if (p2 && p2.clan_id !== S.currentClan && clanOf(p2) && !clanOf(p2).deleted_at) { S.currentClan = p2.clan_id; save(); } }
+  if (r.name === 'clanedit' && r.id && clanById(r.id) && !clanById(r.id).deleted_at) { S.currentClan = r.id; }
+  renderNav(r);
+  var v = { clans: vClans, clannew: vClanNew, clanedit: vClanEdit, people: vPeople, person: vPerson, 'new': vForm, edit: vForm, children: vChildren, tree: vTree, outline: vTree, print: vPrint }[r.name] || vClans;
+  if (SCOPED[r.name] && !cur()) v = needClanView;
+  $main.innerHTML = v(r);
+  if (v === vTree) drawTreeScreen();
+  if (v === vPrint) drawPrintPreview();
+  if (v === vChildren || (v === vPerson && K.inline)) wireChildren();
+  if (v === vPerson && M.open) wireMarriage();
+  window.scrollTo(0, 0);
+}
+
+/* ================= Clan list ================= */
+function vClans() {
+  var clans = liveClans(), gone = S.clans.filter(function (c) { return c.deleted_at; });
+  return '<div class="page-head"><div class="grow"><h1 class="display">Clans</h1><div class="small muted">Each clan is its own registry with its own founding couple, tree and printouts. Clans are never combined.</div></div><a class="btn primary" href="#/clannew">Add clan</a></div>' +
+    (clans.length ? '<div class="clancards">' + clans.map(function (c) {
+      var ppl = inClan(c.id), placed = ppl.filter(function (p) { return p.generation != null; }).length;
+      var maxG = ppl.reduce(function (m, p) { return Math.max(m, p.generation || 0); }, 0);
+      var heads = subclanHeads(c.id).length, un = ppl.filter(isUnplaced).length;
+      var cross = S.marriages.filter(function (m) { var a = byId(m.husband_id), b = byId(m.wife_id); return a && b && a.clan_id !== b.clan_id && (a.clan_id === c.id || b.clan_id === c.id); }).length;
+      var cph = primaryPhoto('clan_group', 'c:' + c.id);
+      return '<article class="clancard' + (c.id === S.currentClan ? ' cur' : '') + '">' + (cph ? '<img class="clan-banner" src="' + IMG[cph.id] + '" alt="' + esc(cph.caption || 'Clan group photo') + '">' : '') + '<div><div class="nm">' + esc(clanLabel(c)) + '</div><div class="small muted">' + esc(c.origin_place || '') + '</div></div>' +
+        '<div class="small"><span class="muted">Founding couple (Gen 1): </span><span class="serif" style="font-weight:600">' + esc(foundersText(c)) + '</span></div>' +
+        '<div class="stats"><span><b>' + ppl.length + '</b>people</span><span><b>' + maxG + '</b>generations</span><span><b>' + heads + '</b>subclans</span>' + (un ? '<span><b>' + un + '</b>unplaced</span>' : '') + '</div>' +
+        (cross ? '<div class="small muted">' + cross + ' marriage' + (cross > 1 ? 's' : '') + ' with other clans</div>' : '') +
+        (placed < ppl.length - un - ppl.filter(isMarriedIn).length ? '<div class="note warn small"><b>Some people aren’t numbered.</b> Their line doesn’t reach the founding couple yet.</div>' : '') +
+        '<div class="row"><button class="btn primary" data-act="open-clan" data-id="' + c.id + '">Open</button><a class="btn" href="#/clanedit/' + c.id + '">Settings</a></div></article>';
+    }).join('') + '</div>' : '<div class="card"><p style="margin:0">No clans yet. Add the first one to start typing in records.</p></div>') +
+    (gone.length ? '<section style="margin-top:40px" class="stack"><h2 style="font-size:18px">Deleted clans</h2>' + gone.map(function (c) { return '<div class="row card" style="flex-direction:row;padding:16px"><span class="serif" style="font-weight:600;flex-grow:1">' + esc(clanLabel(c)) + ' <span class="small muted">· ' + inClan(c.id).length + ' people · deleted ' + esc(new Date(c.deleted_at).toLocaleDateString()) + '</span></span><button class="btn sm" data-act="restore-clan" data-id="' + c.id + '">Restore</button></div>'; }).join('') + '</section>' : '');
+}
+function vClanNew() {
+  return '<form id="clan-new" class="stack" style="max-width:720px;gap:24px" novalidate><header class="stack" style="gap:4px"><a class="small" href="#/clans">‹ Clans</a><h1 class="display">Add clan</h1><p class="muted" style="margin:0">A clan starts with a name. The founding couple can be typed in now or set later.</p></header><div id="form-error"></div>' +
+    '<section class="card"><div class="grid2"><div class="field" id="fld-cname"><label class="label" for="c-name">Clan name<span class="req">required</span></label><input class="input" id="c-name" name="name" placeholder="The founding surname, or the name the family uses"></div><div class="field"><label class="label" for="c-origin">Origin place</label><input class="input" id="c-origin" name="origin_place"></div></div>' +
+    '<div class="field"><label class="label" for="c-notes">Notes</label><textarea class="input" id="c-notes" name="notes" placeholder="Oral history, where the records came from"></textarea></div></section>' +
+    '<section class="card"><h2>Founding couple (Gen 1)</h2><p class="small muted" style="margin:0">One name each is enough. Leave blank to add them later from Clan settings.</p><div class="grid2"><div class="field"><label class="label" for="c-fg">Founder — given name</label><input class="input" id="c-fg" name="f_given"></div><div class="field"><label class="label" for="c-fl">Last name</label><input class="input" id="c-fl" name="f_last"></div>' +
+    '<div class="field"><label class="label" for="c-sg">Founder’s spouse — given name</label><input class="input" id="c-sg" name="s_given"></div><div class="field"><label class="label" for="c-sl">Last name</label><input class="input" id="c-sl" name="s_last"></div></div>' +
+    '<div class="radios"><span class="label">Founder is</span><label><input type="radio" name="f_sex" value="male" checked>Male</label><label><input type="radio" name="f_sex" value="female">Female</label></div></section>' +
+    '<div class="row"><span style="flex-grow:1"></span><a class="btn" href="#/clans">Cancel</a><button class="btn primary">Create clan</button></div></form>';
+}
+var F = { clan: null, founder: null, spouse: '', backedUp: false };
+function vClanEdit(r) {
+  var c = clanById(r.id); if (!c || c.deleted_at) return '<h1 class="display">Not found</h1><p><a href="#/clans">Back to clans</a></p>';
+  if (F.clan !== c.id) F = { clan: c.id, founder: c.founder_id, spouse: c.founder_spouse_id ? String(c.founder_spouse_id) : '', backedUp: false };
+  var ppl = inClan(c.id);
+  var nf = byId(F.founder);
+  var changed = F.founder !== c.founder_id || String(F.spouse || '') !== String(c.founder_spouse_id || '');
+  var spOpts = '<option value="">— None —</option>' + (nf ? spousesOf(nf.id).map(function (s) { return '<option value="' + s.id + '"' + sel(F.spouse, s.id) + '>' + esc(fullName(s) + (s.clan_id !== c.id ? ' · ' + clanLabel(clanOf(s)) : ' · spouse')) + '</option>'; }).join('') : '');
+  var preview = '';
+  if (changed && nf) {
+    var old = byId(c.founder_id);
+    var oldG = old ? old.generation : null;
+    // simulate
+    var saved = ppl.map(function (p) { return [p, p.generation]; }), sf = c.founder_id, ss = c.founder_spouse_id;
+    c.founder_id = nf.id; c.founder_spouse_id = F.spouse ? +F.spouse : null;
+    var n = recomputeClan(c.id); var newOldG = old ? old.generation : null;
+    var lost = saved.filter(function (x) { return x[1] != null && x[0].generation == null; }).length;
+    var changedN = saved.filter(function (x) { return x[1] !== x[0].generation; }).length;
+    c.founder_id = sf; c.founder_spouse_id = ss; saved.forEach(function (x) { x[0].generation = x[1]; });
+    preview = '<div class="panel-warn" role="alert"><b style="color:var(--warn)">This renumbers the whole ' + esc(clanLabel(c)) + '.</b>' +
+      '<ul style="margin:0;padding-left:20px"><li>' + changedN + ' of ' + ppl.length + ' people get a new generation number; ' + n + ' will be numbered in total.</li>' +
+      (old ? '<li>' + esc(fullName(old)) + ' moves from Gen ' + (oldG == null ? '–' : oldG) + ' to ' + (newOldG == null ? 'unnumbered' : 'Gen ' + newOldG) + '.</li>' : '') +
+      (lost ? '<li><b>' + lost + (lost === 1 ? ' person would lose their number' : ' people would lose their number') + '</b> — their line doesn’t reach ' + esc(fullName(nf)) + '. Link the old founders to the new couple first.</li>' : '') +
+      (hasParents(nf) ? '<li>' + esc(fullName(nf)) + ' still has parents recorded — they will sit above Gen 1 unnumbered.</li>' : '') +
+      '<li>The previous founding couple is written into the clan notes with today’s date.</li><li>Subclan sheets numbered from their own head are not affected.</li></ul>' +
+      '<p class="small" style="margin:0"><b>A backup of all clans is downloaded automatically</b> just before renumbering.</p>' +
+      '<div class="row"><button type="button" class="btn sm" data-act="founder-cancel">Keep the current couple</button><button type="button" class="btn danger" data-act="founder-apply" id="f-apply">Back up, then set founding couple and renumber</button></div></div>';
+  }
+  return '<div class="stack" style="max-width:780px;gap:24px"><header class="stack" style="gap:4px"><a class="small" href="#/clans">‹ Clans</a><h1 class="display">' + esc(clanLabel(c)) + '</h1><p class="muted" style="margin:0">' + ppl.length + ' people · founding couple ' + esc(foundersText(c)) + '</p></header><div id="form-error"></div>' +
+    '<form id="clan-edit" data-id="' + c.id + '" class="card" novalidate><h2>Details</h2><div class="grid2"><div class="field" id="fld-cname"><label class="label" for="c-name">Clan name<span class="req">required</span></label><input class="input" id="c-name" name="name" value="' + esc(c.name) + '"></div><div class="field"><label class="label" for="c-origin">Origin place</label><input class="input" id="c-origin" name="origin_place" value="' + esc(c.origin_place) + '"></div></div>' +
+    '<div class="field"><label class="label" for="c-notes">Notes</label><textarea class="input" id="c-notes" name="notes" style="min-height:120px">' + esc(c.notes) + '</textarea><span class="hint">Oral history, sources, and previous founding couples.</span></div><div class="row"><span style="flex-grow:1"></span><button class="btn primary">Save details</button></div></form>' +
+    '<section class="card" id="founders"><h2>Founding couple</h2><p class="small muted" style="margin:0">Gen 1 is counted from here. When research finds the founders’ own parents, add them as people, link the current founder to them as a parent, then set them here.</p>' +
+    '<div class="grid2"><div class="field clan"><label class="label" for="f-founder">Founder</label><select class="input" id="f-founder"><option value="">— Not set —</option>' + ppl.slice().sort(function (a, b) { return (a.generation == null) - (b.generation == null) || bySort(a, b); }).map(function (p) { return opt(p, F.founder); }).join('') + '</select></div>' +
+    '<div class="field"><label class="label" for="f-spouse">Founder’s spouse</label><select class="input" id="f-spouse"' + (nf ? '' : ' disabled') + '>' + spOpts + '</select><span class="hint">Only people married to the founder are listed.</span></div></div>' + preview + '</section>' +
+    '<section class="card"><h2>Clan group photos</h2><p class="small muted" style="margin:0">One per reunion is typical. The main one heads every full-clan printout.</p>' + photoPanel('clan_group', 'c:' + c.id, 'Clan group', c.id) + '</section>' +
+    '<section class="card"><h2>Subclans</h2>' + (subclanHeads(c.id).length ? subclanHeads(c.id).map(function (h) { return '<div class="row" style="border-top:1px solid var(--rule);padding-top:8px"><span style="flex-grow:1"><a class="serif" style="font-weight:600" href="#/person/' + h.id + '">' + esc(fullName(h)) + '</a> <span class="small muted">' + esc(h.subclan_name || '') + ' · Gen ' + h.generation + ' · ' + (Object.keys(descendants(h.id)).length) + ' people</span></span><button type="button" class="btn sm" data-act="print-subclan" data-id="' + h.id + '">Print subclan</button></div>'; }).join('') : '<p class="small muted" style="margin:0">None marked yet. Tick “Subclan head” on a person to list them here and in the print and list screens.</p>') + '</section>' +
+    '<section class="card" style="border-color:var(--danger)"><h2>Delete clan</h2><p class="small muted" style="margin:0">Takes its ' + ppl.length + ' people out of view with it. It can be restored from the clan list.</p><div><button type="button" class="btn danger" data-act="delete-clan" data-id="' + c.id + '">Delete ' + esc(clanLabel(c)) + '…</button></div></section></div>';
+}
+
+/* ================= People list ================= */
+var L = { clan: null, q: '', gen: 'all', show: 'all', sort: 'gen', root: '' };
+function vPeople() {
+  var c = cur();
+  if (L.clan !== c.id) L = { clan: c.id, q: '', gen: 'all', show: 'all', sort: 'gen', root: '' };
+  var root = byId(L.root); if (root && root.clan_id !== c.id) { L.root = ''; root = null; }
+  var ppl = inClan(c.id);
+  var shown = root ? ppl.filter(function (p) { return descendants(root.id)[p.id]; }) : ppl;
+  var maxGen = shown.reduce(function (m, p) { var g = genNum(p, L.root); return Math.max(m, g == null ? -1 : g); }, 0);
+  var genOpts = '<option value="all">All</option>';
+  for (var g = root ? 0 : 1; g <= maxGen; g++) genOpts += '<option value="' + g + '"' + sel(L.gen, String(g)) + '>Gen ' + g + (!root && g === 1 ? ' — founders' : root && g === 0 ? ' — head' : '') + '</option>';
+  if (!root) genOpts += '<option value="none"' + sel(L.gen, 'none') + '>No generation</option>';
+  var heads = subclanHeads(c.id);
+  var unplaced = ppl.filter(isUnplaced);
+  return '<div class="page-head"><div class="grow"><h1 class="display">People</h1><div class="small muted">' + ppl.length + ' in the ' + esc(clanLabel(c)) + ' · ' + unplaced.length + ' unplaced</div></div>' +
+    '<a class="btn" href="#/children">Add children</a><a class="btn primary" href="#/new">Add person</a></div>' +
+    '<div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap"><section style="flex:1 1 640px;min-width:0">' +
+    '<form class="filters" role="search" onsubmit="return false">' +
+    '<div class="field" style="flex:1 1 100%"><label class="label" for="f-root">Numbering</label><select class="input" id="f-root"><option value="">Whole clan — Gen 1 is the founding couple</option>' + heads.map(function (h) { return '<option value="' + h.id + '"' + sel(L.root, h.id) + '>Subclan: ' + esc((h.subclan_name ? h.subclan_name + ' — ' : '') + fullName(h)) + ' is Gen 0</option>'; }).join('') + '</select>' + (root ? '<span class="hint">Showing only ' + esc(fullName(root)) + '’s line, numbered from them.</span>' : heads.length ? '' : '<span class="hint">Mark a person as a subclan head to number a branch from its own head.</span>') + '</div>' +
+    '<div class="field" style="flex:1 1 220px"><label class="label" for="f-q">Search names</label><input class="input" id="f-q" type="search" value="' + esc(L.q) + '" placeholder="Given, last or nickname" autocomplete="off"></div>' +
+    '<div class="field" style="width:160px"><label class="label" for="f-gen">Generation</label><select class="input" id="f-gen">' + genOpts + '</select></div>' +
+    '<div class="field" style="width:170px"><label class="label" for="f-show">Show</label><select class="input" id="f-show"><option value="all"' + sel(L.show, 'all') + '>Everyone</option><option value="clan"' + sel(L.show, 'clan') + '>Numbered</option><option value="unplaced"' + sel(L.show, 'unplaced') + '>Unplaced only</option><option value="married"' + sel(L.show, 'married') + '>Married in</option><option value="living"' + sel(L.show, 'living') + '>Living</option><option value="heads"' + sel(L.show, 'heads') + '>Subclan heads</option></select></div>' +
+    '<div class="field" style="width:220px"><label class="label" for="f-sort">Sort by</label><select class="input" id="f-sort"><option value="gen"' + sel(L.sort, 'gen') + '>Generation, then family order</option><option value="last"' + sel(L.sort, 'last') + '>Last name</option><option value="given"' + sel(L.sort, 'given') + '>Given name</option><option value="recent"' + sel(L.sort, 'recent') + '>Recently added</option></select></div>' +
+    '</form><div id="list">' + listHtml() + '</div></section>' +
+    '<aside style="flex:0 1 300px;display:flex;flex-direction:column;gap:16px"><div class="card" style="padding:20px"><div class="row"><h2 style="flex-grow:1">To place</h2><span class="badge warn">' + unplaced.length + ' unplaced</span></div>' +
+    '<p class="small muted" style="margin:0">Typed in, no parent linked yet. They join the tree as soon as a clan-line parent is set.</p>' +
+    (unplaced.length ? unplaced.map(function (p) { return '<div class="row" style="border-top:1px solid var(--rule);padding-top:8px;flex-wrap:nowrap"><div style="flex-grow:1;min-width:0"><a href="#/person/' + p.id + '" class="serif" style="font-weight:600;font-size:17px;color:var(--ink);text-decoration:none">' + nameHtml(p) + '</a><div class="small muted">' + esc(ev(p, 'birth') || 'no dates') + '</div></div><a class="small" style="font-weight:600;white-space:nowrap" href="#/edit/' + p.id + '">Link parent</a></div>'; }).join('') : '<p class="small muted" style="margin:0">Everyone is placed.</p>') +
+    '</div><div class="box small muted"><b style="color:var(--ink)">Married in</b>Spouses with no parents in this clan are not counted as unplaced. A spouse from another clan stays in their own clan and appears here only on the tree.</div></aside></div>';
+}
+function listHtml() {
+  var c = cur(); var q = L.q.trim().toLowerCase();
+  var desc = L.root ? descendants(+L.root) : null;
+  var list = inClan(c.id).filter(function (p) {
+    if (desc && !desc[p.id]) return false;
+    var g = genNum(p, L.root);
+    if (q && (fullName(p) + ' ' + (p.nickname || '') + ' ' + (p.subclan_name || '')).toLowerCase().indexOf(q) < 0) return false;
+    if (L.gen === 'none' && g != null) return false;
+    if (L.gen !== 'all' && L.gen !== 'none' && g !== +L.gen) return false;
+    if (L.show === 'clan' && g == null) return false;
+    if (L.show === 'unplaced' && !isUnplaced(p)) return false;
+    if (L.show === 'married' && !isMarriedIn(p)) return false;
+    if (L.show === 'living' && !p.is_living) return false;
+    if (L.show === 'heads' && !p.is_subclan_head) return false;
+    return true;
+  });
+  var cmp = { gen: bySort, last: function (a, b) { return (a.last_name || '~').localeCompare(b.last_name || '~') || a.given_name.localeCompare(b.given_name); }, given: function (a, b) { return a.given_name.localeCompare(b.given_name); }, recent: function (a, b) { return b.id - a.id; } }[L.sort];
+  list.sort(cmp);
+  if (!list.length) return '<div class="card"><p class="muted" style="margin:0">Nobody matches. Clear the search or filters.</p></div>';
+  return '<div class="list"><div class="lrow lhead"><span style="text-align:right">Gen' + (L.root ? '*' : '') + '</span><span>Name · link</span><span>Dates</span><span></span></div>' + list.map(function (p) {
+    var sub = '';
+    var cp = byId(clanParentId(p));
+    if (cp) sub = 'child of ' + fullName(cp);
+    else if (isFounder(p)) sub = 'founding couple';
+    else if (isMarriedIn(p)) sub = 'married to ' + spousesOf(p.id).map(function (s) { return fullName(s) + (s.clan_id !== p.clan_id ? ' (' + clanLabel(clanOf(s)) + ')' : ''); }).join(', ');
+    else sub = 'no parent linked';
+    var g = genNum(p, L.root);
+    var flags = (isUnplaced(p) ? '<span class="badge warn">Unplaced</span>' : '') + (isFounder(p) ? '<span class="badge gilt">Founder</span>' : '') + (p.is_subclan_head ? '<span class="badge lineage" title="' + esc(p.subclan_name || '') + '">Subclan head</span>' : '') + (isMarriedIn(p) ? '<span class="badge">Married in</span>' : '') + (p.is_living ? '<span class="badge living">Living</span>' : '');
+    return '<div class="lrow"><span class="g">' + (g == null ? '–' : g) + '</span><span style="min-width:0"><span class="n"><a href="#/person/' + p.id + '">' + nameHtml(p) + '</a></span><br><span class="p">' + esc(sub) + '</span></span><span class="d">' + esc(span(p)) + '</span><span class="f">' + flags + (p.generation != null ? '<button type="button" class="btn sm link tr" data-act="show-in-tree" data-id="' + p.id + '">Show in tree</button>' : '') + '</span></div>';
+  }).join('') + '</div><p class="small muted">Showing ' + list.length + ' of ' + inClan(c.id).length + '.' + (L.root ? ' *Gen numbered from ' + esc(fullName(byId(L.root))) + ' as Gen 0; their absolute numbers are unchanged.' : '') + '</p>';
+}
+
+/* ================= Person detail ================= */
+function vPerson(r) {
+  var p = byId(r.id); if (!p) return '<h1 class="display">Not found</h1><p><a href="#/people">Back to people</a></p>';
+  if (K.inline && K.inline !== p.id) K = blankK();
+  if (M.open && M.person !== p.id) M = { open: false };
+  var c = clanOf(p);
+  var line = lineOf(p);
+  var crumbs = line.map(function (x, i) { return i === line.length - 1 ? '<span style="color:var(--ink);font-weight:600">' + esc(fullName(x)) + '</span>' : '<a href="#/person/' + x.id + '">' + esc(fullName(x)) + '</a>'; }).join('<span aria-hidden="true">›</span>');
+  var badges = (p.generation != null ? '<span class="gen">' + genLabel(p.generation) + '</span>' : '') + (isFounder(p) ? '<span class="badge gilt">Founding couple</span>' : p.generation != null ? '<span class="badge lineage">Clan line</span>' : '') + (p.is_subclan_head ? '<span class="badge lineage">Subclan head' + (p.subclan_name ? ' · ' + esc(p.subclan_name) : '') + '</span>' : '') + (isUnplaced(p) ? '<span class="badge warn">Unplaced</span>' : '') + (isMarriedIn(p) ? '<span class="badge">Married in</span>' : '') + (p.is_living ? '<span class="badge living">Living</span>' : '');
+  var sibs = hasParents(p) ? siblingsOf(p) : [];
+  var sibLine = sibs.length ? 'Child ' + p.sibling_order + ' of ' + sibs.length + ' · ' + [byId(p.father_id), byId(p.mother_id)].filter(Boolean).map(fullName).join(' and ') : '';
+  var facts = [['Clan', clanLabel(c)], ['Born', [ev(p, 'birth'), p.birth_place].filter(Boolean).join(' · ')],
+    ['Died', [ev(p, 'death'), p.death_place].filter(Boolean).join(' · ')], ['Sex', p.sex === 'unknown' ? '' : p.sex[0].toUpperCase() + p.sex.slice(1)],
+    ['Living', p.is_living == null ? '' : p.is_living ? 'Yes' : 'No'], ['Occupation', p.occupation], ['Residence', p.residence], ['Phone', p.phone], ['Email', p.email]].filter(function (f) { return f[1]; });
+  var cp = byId(clanParentId(p)), op = byId(otherParentId(p));
+  var rel = function (who) { var r0 = who === p.father_id ? p.father_relation : p.mother_relation; return r0 && r0 !== 'biological' ? ' · ' + r0 : ''; };
+  var role = function (x) { return x.id === p.father_id ? 'father' : 'mother'; };
+  var parents = '';
+  if (cp) parents += '<div class="stack" style="gap:6px"><span class="small" style="font-weight:600;color:var(--lineage)">Clan-line parent · ' + role(cp) + esc(rel(cp.id)) + '</span>' + pnode(cp, { clan: true }) + '</div>';
+  if (op && !p.hide_second_parent) parents += '<div class="stack" style="gap:6px"><span class="small muted" style="font-weight:600">Other parent · ' + role(op) + esc(rel(op.id)) + (op.clan_id !== p.clan_id ? ' · from the ' + esc(clanLabel(clanOf(op))) : op.generation == null ? ' · married in' : '') + '</span>' + pnode(op, { relTo: p.clan_id, clan: op.clan_id === p.clan_id && op.generation != null }) + '</div>';
+  if (op && p.hide_second_parent) parents += '<p class="small muted" style="margin:0">Other parent hidden at the family’s request. <a href="#/edit/' + p.id + '">Show in form</a></p>';
+  if (!cp && !op) parents = isFounder(p) ? '<p class="muted" style="margin:0">One of the founding couple of the ' + esc(clanLabel(c)) + '.</p>' : isMarriedIn(p) ? '<p class="muted" style="margin:0">Married into the clan — parents are not recorded here.</p>' : '<div class="note warn"><b>Unplaced.</b> Link a clan-line parent to put this person in the tree. <a href="#/edit/' + p.id + '">Link parent</a></div>';
+  if (isFounder(p) && cp) parents += '<div class="note info small"><b>Founder with parents.</b> To count generations from ' + esc(fullName(cp)) + ' instead, use <a href="#/clanedit/' + c.id + '">Set founding couple</a>.</div>';
+  if (p.parentage_note) parents += '<p style="margin:0" class="small"><span class="muted">Parentage note:</span> “' + esc(p.parentage_note) + '”</p>';
+  var ms = marriagesOf(p.id);
+  var mHtml = ms.map(function (m) {
+    var sp = byId(spouseIn(m, p.id));
+    if (M.open && M.id === m.id) return marriageForm(p, m);
+    var fph = primaryPhoto('family', 'm:' + m.id);
+    return '<div class="row" style="padding:12px;border:1px solid var(--rule);border-radius:var(--radius-md);flex-wrap:nowrap">' + (fph ? '<img src="' + IMG[fph.id] + '" alt="Family picture" style="width:44px;height:44px;object-fit:cover;border-radius:var(--radius-sm)">' : '') + '<span aria-hidden="true" class="serif" style="font-size:22px;color:var(--spouse)">=</span><div style="flex-grow:1;min-width:0">' + (sp ? '<a href="#/person/' + sp.id + '" class="serif" style="font-weight:600;font-size:17px">' + nameHtml(sp) + '</a>' + otherClanBadge(sp, p.clan_id) : '<span class="muted">Spouse not recorded</span>') + '<div class="small muted">' + esc(['m. ' + (m.date_text || fmtDate(m.date) || '?'), m.place].filter(Boolean).join(', ')) + '</div></div><span class="badge">' + esc(m.status) + '</span><button class="btn sm" data-act="edit-marriage" data-id="' + m.id + '">Edit</button></div>';
+  }).join('');
+  if (M.open && !M.id) mHtml += marriageForm(p, null);
+  // children, in sibling order, grouped by sibling set (one set per other parent)
+  var kids = childrenOf(p.id);
+  var groups = {}, order = [];
+  kids.forEach(function (k) { var o = k.father_id === p.id ? k.mother_id : k.father_id; var hidden = o && k.hide_second_parent && otherParentId(k) === o; var key = setKey(k.father_id, k.mother_id); if (!groups[key]) { groups[key] = { list: [], other: o, hidden: hidden }; order.push(key); } groups[key].list.push(k); });
+  var arrow = function (d) { return '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="' + (d < 0 ? 'M2 8l4-4 4 4' : 'M2 4l4 4 4-4') + '" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>'; };
+  var kHtml = order.map(function (key) {
+    var g = groups[key], o = byId(g.other);
+    var head = !g.other ? 'no other parent recorded' : g.hidden ? 'other parent hidden' : 'with ' + esc(fullName(o)) + (o.clan_id !== p.clan_id ? ' (' + esc(clanLabel(clanOf(o))) + ')' : '');
+    var xc = g.list.filter(function (k) { return k.clan_id !== p.clan_id; }).length;
+    var note = xc ? ' · <span style="color:var(--spouse)">' + (xc === g.list.length ? 'all' : xc + ' of ' + g.list.length) + ' in another clan — Gen shown is from their own clan’s founders</span>' : '';
+    var n = g.list.length;
+    return '<div class="stack" style="gap:8px"><span class="small muted">' + head + note + '</span>' + g.list.map(function (k, i) {
+      return '<div class="sibrow"><span class="pos" title="Position among siblings">' + k.sibling_order + '</span><div style="flex-grow:1;min-width:0">' + pnode(k, { clan: clanParentId(k) === p.id && k.generation != null, relTo: p.clan_id }) + '</div>' +
+        (n > 1 ? '<div class="mv"><button class="btn sm" data-act="sib-move" data-id="' + k.id + '" data-dir="-1" aria-label="Move ' + esc(fullName(k)) + ' earlier"' + (i === 0 ? ' disabled' : '') + '>' + arrow(-1) + '</button><button class="btn sm" data-act="sib-move" data-id="' + k.id + '" data-dir="1" aria-label="Move ' + esc(fullName(k)) + ' later"' + (i === n - 1 ? ' disabled' : '') + '>' + arrow(1) + '</button></div>' : '') + '</div>';
+    }).join('') + '</div>';
+  }).join('');
+  return '<nav class="crumbs" aria-label="Line of descent" style="margin-bottom:16px"><span>' + esc(clanLabel(c)) + '</span><span aria-hidden="true">·</span>' + crumbs + '</nav>' +
+    '<div class="page-head" style="align-items:flex-end;flex-wrap:wrap">' + photoHtml(p, 'lg') + '<div class="grow"><div class="row" style="gap:8px">' + badges + '</div><h1 class="display">' + esc(fullName(p)) + (p.nickname ? ' <span style="font-weight:400;font-style:italic;font-size:28px">“' + esc(p.nickname) + '”</span>' : '') + '</h1><div class="muted">' + esc([life(p), p.occupation].filter(Boolean).join(' · ')) + '</div>' + (sibLine ? '<div class="small muted">' + esc(sibLine) + '</div>' : '') + '</div>' +
+    (p.is_subclan_head && p.generation != null ? '<button class="btn" data-act="print-subclan" data-id="' + p.id + '">Print subclan</button>' : '') +
+    (p.generation != null ? '<button class="btn link" data-act="show-in-tree" data-id="' + p.id + '">Show in tree</button>' : '') + '<a class="btn primary" href="#/edit/' + p.id + '">Edit</a></div>' +
+    '<div class="grid3" style="gap:24px;align-items:start">' +
+    '<section class="card"><h2>Record</h2>' + (facts.length ? '<dl style="margin:0;display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px 16px">' + facts.map(function (f) { return '<dt class="muted">' + f[0] + '</dt><dd style="margin:0">' + esc(f[1]) + '</dd>'; }).join('') + '</dl>' : '') +
+    (p.notes ? '<div style="border-top:1px solid var(--rule);padding-top:16px"><div class="small" style="font-weight:600">Notes</div><p style="margin:4px 0 0;white-space:pre-line">' + esc(p.notes) + '</p></div>' : '') + '</section>' +
+    '<section class="card"><h2>Parents</h2>' + parents + '<div class="row" style="margin-top:8px"><h2 style="flex-grow:1">Marriages</h2>' + (M.open ? '' : '<button class="btn sm" data-act="add-marriage">Add marriage</button>') + '</div>' + (mHtml || '<p class="small muted" style="margin:0">None recorded.</p>') + '</section>' +
+    '<section class="card"><div class="row"><h2 style="flex-grow:1">Children · ' + kids.length + '</h2>' + (K.inline ? '' : '<button class="btn sm" data-act="kids-inline" data-id="' + p.id + '">Add children</button>') + '</div>' + (kHtml ? kHtml + '<p class="small muted" style="margin:0">First child at the top. Use the arrows to fix the order — dates are never used to sort.</p>' : '<p class="small muted" style="margin:0">None recorded.</p>') + '</section></div>' +
+    (K.inline === p.id ? inlineKids(p) : '') + photosSection(p);
+}
+/* §3.6 — portrait, a family picture against each marriage (or the person, for a solo parent), subclan group photo for a head */
+function photosSection(p) {
+  var c = clanOf(p), parts = [];
+  parts.push(photoPanel('portrait', 'p:' + p.id, 'Portrait', p.clan_id));
+  marriagesOf(p.id).forEach(function (m) {
+    var sp = byId(spouseIn(m, p.id));
+    parts.push(photoPanel('family', 'm:' + m.id, 'Family picture — with ' + (sp ? esc(fullName(sp)) : 'spouse not recorded') + (m.date_text || m.date ? ' <span class="small muted" style="font-weight:400">m. ' + esc(m.date_text || fmtDate(m.date)) + '</span>' : ''), m.husband_id === p.id || m.wife_id === p.id ? p.clan_id : c.id));
+  });
+  var solo = childrenOf(p.id).some(function (k) { return !(k.father_id === p.id ? k.mother_id : k.father_id); });
+  if (solo || (!marriagesOf(p.id).length && childrenOf(p.id).length) || photosOf('family', 'p:' + p.id).length) parts.push(photoPanel('family', 'p:' + p.id, 'Family picture — ' + esc(fullName(p)) + ' and children (no marriage recorded)', p.clan_id));
+  if (p.is_subclan_head) parts.push(photoPanel('subclan_group', 'p:' + p.id, 'Subclan group photo' + (p.subclan_name ? ' — ' + esc(p.subclan_name) : ''), p.clan_id));
+  return '<section class="card" style="margin-top:24px" aria-label="Photos"><div class="row"><h2 style="flex-grow:1">Photos</h2>' + (IDB_OK ? '' : '<span class="badge warn">Photos kept in the main storage — only a few will fit</span>') + '</div>' + parts.join('') + '</section>';
+}
+function inlineKids(p) {
+  var spouses = spousesOf(p.id);
+  var otherOpts = '<option value="">No other parent recorded</option>' + spouses.map(function (s) { return '<option value="' + s.id + '"' + sel(K.other, s.id) + '>' + esc(fullName(s)) + (s.clan_id !== p.clan_id ? ' (' + esc(clanLabel(clanOf(s))) + ')' : '') + '</option>'; }).join('');
+  return '<section class="card" style="margin-top:24px" aria-label="Add children of ' + esc(fullName(p)) + '"><div class="row"><h2 style="flex-grow:1">Add children of ' + esc(fullName(p)) + '</h2><div class="field" style="width:320px"><label class="label" for="k-other">Other parent (optional)</label><select class="input" id="k-other">' + otherOpts + '</select></div></div>' +
+    '<p class="small muted" style="margin:0">Type them first to last — row order is sibling order. A child known only by nickname is fine: put it in both boxes or just the nickname box and a placeholder given name.</p>' +
+    kidsRows(true) +
+    '<div class="row"><p class="small muted" style="flex-grow:1;margin:0" id="k-summary">' + kidsSummary() + '</p><button class="btn" data-act="kids-cancel">Cancel</button><button class="btn primary" data-act="save-kids" id="k-save">' + saveKidsLabel() + '</button></div></section>';
+}
+var M = { open: false };
+function marriageForm(p, m) {
+  m = m || {};
+  return '<form class="stack" id="marriage-form" data-person="' + p.id + '" data-id="' + (m.id || '') + '" style="gap:12px;padding:16px;border:1px solid var(--rule-strong);border-radius:var(--radius-md);background:var(--paper)" novalidate>' +
+    '<div id="m-pick">' + pickHtml(p) + '</div>' +
+    '<div class="grid2" style="gap:12px"><div class="field"><label class="label" for="m-dt">Date, as written</label><input class="input" id="m-dt" name="date_text" value="' + esc(m.date_text) + '" placeholder="abt. 1926"></div><div class="field"><label class="label" for="m-d">Exact date (if known)</label><input class="input" type="date" id="m-d" name="date" value="' + esc(m.date) + '"></div></div>' +
+    '<div class="grid2" style="gap:12px"><div class="field"><label class="label" for="m-p">Place</label><input class="input" id="m-p" name="place" value="' + esc(m.place) + '"></div><div class="field"><label class="label" for="m-s">Status</label><select class="input" id="m-s" name="status">' + ['married','separated','widowed','unknown'].map(function (s0) { return '<option' + sel(m.status || 'married', s0) + '>' + s0 + '</option>'; }).join('') + '</select></div></div>' +
+    '<div class="field"><label class="label" for="m-n">Notes</label><input class="input" id="m-n" name="notes" value="' + esc(m.notes) + '"></div>' +
+    '<div class="row">' + (m.id ? '<button type="button" class="btn sm danger" data-act="del-marriage" data-id="' + m.id + '">Remove</button>' : '') + '<span style="flex-grow:1"></span><button type="button" class="btn sm" data-act="cancel-marriage">Cancel</button><button class="btn sm primary">Save marriage</button></div></form>';
+}
+/* §3.8 — search first, create second. The spouse field searches name and nickname across all clans. */
+function pickHtml(p) {
+  if (M.sel) {
+    var s0 = byId(M.sel);
+    return '<div class="field"><span class="label">Spouse</span><div class="row" style="padding:10px 12px;border:2px solid var(--lineage);border-radius:var(--radius-sm);background:var(--paper-raised);flex-wrap:nowrap"><span style="flex-grow:1;min-width:0"><b class="serif" style="font-size:16px">' + nameHtml(s0) + '</b> <span class="small muted">· ' + esc(clanLabel(clanOf(s0))) + (s0.generation != null ? ' · Gen ' + s0.generation : '') + (span(s0) ? ' · ' + esc(span(s0)) : '') + '</span></span><button type="button" class="btn sm" data-act="m-change">Change</button></div></div>';
+  }
+  if (M.create) {
+    return '<div class="stack" style="gap:10px;padding:12px;border:1px dashed var(--rule-strong);border-radius:var(--radius-sm)"><div class="row"><b style="flex-grow:1">New person, married in</b><button type="button" class="btn sm link" data-act="m-search">Search again</button></div>' +
+      '<p class="small muted" style="margin:0">Added to the ' + esc(clanLabel(clanOf(p))) + '. Only a name is needed — a nickname alone is fine.</p>' +
+      '<div class="grid2" style="gap:12px"><div class="field" id="fld-mg"><label class="label" for="m-g">Given name</label><input class="input" id="m-g" name="new_given" value="' + esc(M.prefill || '') + '"></div><div class="field"><label class="label" for="m-nk">Nickname</label><input class="input" id="m-nk" name="new_nick" placeholder="How the family knows them"></div>' +
+      '<div class="field"><label class="label" for="m-l">Surname or maiden surname</label><input class="input" id="m-l" name="new_last"></div>' +
+      '<fieldset class="field" style="border:0;padding:0;margin:0"><legend class="label" style="margin-bottom:4px">Sex</legend><div class="radios"><label><input type="radio" name="new_sex" value="male">Male</label><label><input type="radio" name="new_sex" value="female">Female</label><label><input type="radio" name="new_sex" value="unknown">Unknown</label></div></fieldset></div>' +
+      '<span class="hint">Sex decides whether they are written as husband or wife. Nothing is assumed from ' + esc(fullName(p)) + '’s.</span></div>';
+  }
+  return '<div class="field"><label class="label" for="m-q">Spouse — search every clan by name or nickname</label><input class="input" id="m-q" autocomplete="off" placeholder="Start typing a name" value="' + esc(M.q || '') + '"></div><div id="m-results" class="stack" style="gap:4px">' + resultsHtml(p) + '</div>' +
+    '<div class="small muted">Leave empty if the spouse isn’t recorded.</div>';
+}
+function resultsHtml(p) {
+  var q = (M.q || '').trim().toLowerCase();
+  if (q.length < 2) return '';
+  var toks = q.split(/\s+/);
+  var already = spousesOf(p.id).map(function (x) { return x.id; });
+  var hits = S.people.filter(function (x) {
+    if (x.id === p.id) return false; var c = clanOf(x); if (!c || c.deleted_at) return false;
+    var hay = (fullName(x) + ' ' + (x.nickname || '')).toLowerCase();
+    return toks.every(function (t) { return hay.indexOf(t) >= 0; });
+  }).sort(bySort).slice(0, 8);
+  return hits.map(function (x) {
+    return '<button type="button" class="mres" data-act="m-pick" data-id="' + x.id + '"><span style="flex-grow:1;min-width:0"><b class="serif">' + nameHtml(x) + '</b><br><span class="small muted">' + esc(clanLabel(clanOf(x))) + (x.generation != null ? ' · Gen ' + x.generation : isMarriedIn(x) ? ' · married in' : '') + (span(x) ? ' · ' + esc(span(x)) : '') + (spousesOf(x.id).length ? ' · married to ' + esc(spousesOf(x.id).map(fullName).join(', ')) : '') + '</span></span>' + (already.indexOf(x.id) >= 0 ? '<span class="badge warn">Already married to them</span>' : '<span class="small" style="color:var(--lineage);font-weight:600">Link</span>') + '</button>';
+  }).join('') + '<button type="button" class="btn sm" data-act="m-create" style="align-self:flex-start">' + (hits.length ? 'None of these — add a new person' : 'No match — add “' + esc(M.q.trim()) + '” as a new person') + '</button>';
+}
+function wireMarriage() {
+  var q = document.getElementById('m-q'); if (!q) return;
+  q.addEventListener('input', function () { M.q = q.value; document.getElementById('m-results').innerHTML = resultsHtml(byId(M.person)); });
+}
+/* husband_id / wife_id: the person whose sex is known takes their matching column, the other the remaining one; neither known → consistent default (first person as husband_id). */
+function assignCouple(a, b) {
+  if (a && a.sex === 'male') return { h: a, w: b };
+  if (a && a.sex === 'female') return { h: b, w: a };
+  if (b && b.sex === 'male') return { h: b, w: a };
+  if (b && b.sex === 'female') return { h: a, w: b };
+  return { h: a, w: b };
+}
+/* ================= Person form ================= */
+var pendingPhoto;
+function vForm(r) {
+  var c = cur();
+  var isNew = r.name === 'new';
+  var p = isNew ? Object.assign(blankPerson(), { clan_id: c.id }) : byId(r.id);
+  if (!p) return '<h1 class="display">Not found</h1>';
+  pendingPhoto = undefined;
+  var cpid = isNew ? (r.q.parent ? +r.q.parent : null) : clanParentId(p);
+  var opid = isNew ? null : otherParentId(p);
+  var cp = byId(cpid);
+  var cpRel = cp && cp.id === p.father_id ? p.father_relation : p.mother_relation;
+  var opRel = opid && opid === p.father_id ? p.father_relation : p.mother_relation;
+  var dupes = !isNew ? inClan(p.clan_id).filter(function (x) { return x.id !== p.id && fullName(x).toLowerCase() === fullName(p).toLowerCase(); }) : [];
+  var radio = function (name, val, cur0, label) { return '<label><input type="radio" name="' + name + '" value="' + val + '"' + (String(cur0) === String(val) ? ' checked' : '') + '>' + label + '</label>'; };
+  var dateBlock = function (k, label) {
+    return '<fieldset class="field" style="border:0;padding:0;margin:0"><legend class="label" style="margin-bottom:6px">' + label + '</legend><div style="display:grid;grid-template-columns:170px minmax(0,1fr) minmax(0,1fr);gap:12px">' +
+      '<div class="field"><label class="sub" for="' + k + '_date">Exact date (if known)</label><input class="input" type="date" id="' + k + '_date" name="' + k + '_date" value="' + esc(p[k + '_date']) + '"></div>' +
+      '<div class="field"><label class="sub" for="' + k + '_date_text">As written in the record</label><input class="input" id="' + k + '_date_text" name="' + k + '_date_text" value="' + esc(p[k + '_date_text']) + '" placeholder="abt. 1892"></div>' +
+      '<div class="field"><label class="sub" for="' + k + '_place">Place</label><input class="input" id="' + k + '_place" name="' + k + '_place" value="' + esc(p[k + '_place']) + '"></div></div></fieldset>';
+  };
+  var inp = function (name, label, extra) { return '<div class="field"><label class="label" for="i-' + name + '">' + label + '</label><input class="input" id="i-' + name + '" name="' + name + '" value="' + esc(p[name]) + '"' + (extra || '') + '></div>'; };
+  return '<form id="person-form" data-id="' + (isNew ? '' : p.id) + '" novalidate style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap">' +
+    '<div class="stack" style="flex:1 1 640px;max-width:860px;gap:24px">' +
+    '<header class="stack" style="gap:4px">' + (isNew ? '<a class="small" href="#/people">‹ People</a>' : '<a class="small" href="#/person/' + p.id + '">‹ Back to ' + esc(fullName(p)) + '</a>') + '<h1 class="display">' + (isNew ? 'Add person' : esc(fullName(p))) + '</h1><p class="muted" style="margin:0">' + (isNew ? 'Adding to the <b>' + esc(clanLabel(c)) + '</b>. ' : esc(clanLabel(clanOf(p))) + '. ') + 'Only the given name is required.</p></header>' +
+    '<div id="form-error"></div>' +
+    '<section class="card"><h2>Name</h2><div class="grid3">' +
+    '<div class="field" id="fld-given"><label class="label" for="i-given_name">Given name<span class="req">required</span></label><input class="input" id="i-given_name" name="given_name" value="' + esc(p.given_name) + '"></div>' +
+    inp('middle_name', 'Middle name') + inp('last_name', 'Last name') + inp('suffix', 'Suffix', ' placeholder="Jr., III"') + inp('nickname', 'Nickname') + '</div>' +
+    (dupes.length ? '<div class="note warn"><b>Same name.</b> ' + dupes.map(function (d) { return esc(fullName(d)) + (d.generation != null ? ' (Gen ' + d.generation + ')' : ''); }).join(', ') + ' is also in this clan. Names repeat across branches — this saves fine.</div>' : '') + '</section>' +
+    '<section class="card"><h2>Life</h2><div class="row" style="gap:48px;align-items:flex-start">' +
+    '<fieldset class="field" style="border:0;padding:0;margin:0"><legend class="label" style="margin-bottom:4px">Sex</legend><div class="radios">' + radio('sex', 'male', p.sex, 'Male') + radio('sex', 'female', p.sex, 'Female') + radio('sex', 'unknown', p.sex, 'Unknown') + '</div></fieldset>' +
+    '<fieldset class="field" style="border:0;padding:0;margin:0"><legend class="label" style="margin-bottom:4px">Living?</legend><div class="radios">' + radio('is_living', 'true', p.is_living, 'Yes') + radio('is_living', 'false', p.is_living, 'No') + radio('is_living', 'null', p.is_living, 'Not known') + '</div></fieldset></div>' +
+    dateBlock('birth', 'Born') + dateBlock('death', 'Died') + '</section>' +
+    '<section class="card" id="parents"><h2>Parents</h2>' +
+    (!isNew && isFounder(p) ? '<div class="note info"><b>' + esc(fullName(p)) + ' is a founder (Gen 1).</b> You can link their parents here; numbering won’t change until you use <a href="#/clanedit/' + p.clan_id + '">Set founding couple</a>.</div>' : '') +
+    '<div style="display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px 16px;align-items:start">' +
+    '<div class="field clan" id="fld-cp"><label class="label" for="i-cp">Clan-line parent</label><select class="input" id="i-cp" name="clan_parent_id"><option value="">— None yet —</option>' + personOptions(cpid, p.id, null, p.clan_id) + '</select><span class="hint">The parent descended from the founders. Only people in the ' + esc(clanLabel(clanOf(p))) + ' can be picked.</span></div>' +
+    '<div class="field"><label class="label" for="i-cprel">Relation</label>' + relSelect('clan_relation', cpRel, 'i-cprel') + '</div>' +
+    '<div class="field" id="fld-op"><label class="label" for="i-op">Other parent (optional)</label><select class="input" id="i-op" name="other_parent_id"><option value="">— Not recorded —</option>' + personOptionsAllClans(opid, p.id) + '</select><span class="hint">Leave blank if the family didn’t name them. May be from another clan — the child still belongs to the clan-line parent’s clan.</span></div>' +
+    '<div class="field"><label class="label" for="i-oprel">Relation</label>' + relSelect('other_relation', opRel, 'i-oprel') + '</div></div>' +
+    '<div class="field" style="max-width:340px"><label class="label" for="i-order">Position among siblings</label><input class="input" type="number" min="1" id="i-order" name="sibling_order" value="' + (!isNew && hasParents(p) ? p.sibling_order : '') + '" placeholder="After the last child"><span class="hint">' + (!isNew && hasParents(p) ? 'Child ' + p.sibling_order + ' of ' + siblingsOf(p).length + '. First child is 1; changing it moves the others along.' : 'First child is 1. Leave blank to add after the existing children.') + ' Twins take consecutive places — note which is which in Notes.</span></div>' +
+    '<div class="field"><label class="label" for="i-pn">Parentage note</label><textarea class="input" id="i-pn" name="parentage_note" placeholder="In the family’s own words — “raised by mother”, “father not named at the family’s request”">' + esc(p.parentage_note) + '</textarea></div>' +
+    '<label class="check" style="padding:12px;border:1px solid var(--rule);border-radius:var(--radius-sm)"><input type="checkbox" name="hide_second_parent"' + (p.hide_second_parent ? ' checked' : '') + '><span><b>Hide the other parent in views and print</b><br><span class="small muted">Only for when both parents are clan members and one is not to be shown. The link stays recorded; it prints only on the archive copy.</span></span></label>' +
+    '</section>' +
+    '<section class="card"><h2>Subclan</h2><label class="check"><input type="checkbox" name="is_subclan_head" id="i-head"' + (p.is_subclan_head ? ' checked' : '') + '><span><b>Subclan head</b><br><span class="small muted">This branch prints its own sheet, numbered from this person as Gen 0. Heads are offered in the list, tree and print screens.</span></span></label>' +
+    '<div class="field" style="max-width:420px"><label class="label" for="i-subclan_name">Subclan name (optional)</label><input class="input" id="i-subclan_name" name="subclan_name" value="' + esc(p.subclan_name) + '" placeholder="What the branch calls itself"></div></section>' +
+    '<section class="card"><h2>More</h2><div class="grid2">' + inp('occupation', 'Occupation') + inp('residence', 'Residence') + inp('phone', 'Phone', ' type="tel"') + inp('email', 'Email', ' type="email"') + '</div>' +
+    '<p class="small muted" style="margin:0">Photos — portrait, family pictures and group photos — are added on the person’s page.</p>' +
+    '<div class="field"><label class="label" for="i-notes">Notes</label><textarea class="input" id="i-notes" name="notes" placeholder="Including the source, for a researched ancestor">' + esc(p.notes) + '</textarea></div></section>' +
+    '<div class="row" style="position:sticky;bottom:16px;padding:16px 24px;background:var(--paper-raised);border:1px solid var(--rule-strong);border-radius:var(--radius-md);box-shadow:var(--shadow-lg)">' +
+    (isNew ? '' : '<button type="button" class="btn danger" data-act="delete-person" data-id="' + p.id + '">Delete</button>') +
+    '<span class="small muted" style="flex-grow:1" id="gen-hint">' + genHint(cp, p) + '</span>' +
+    '<a class="btn" href="' + (isNew ? '#/people' : '#/person/' + p.id) + '">Cancel</a>' + (isNew ? '<button type="submit" class="btn" name="again" value="1">Save and add another</button>' : '') + '<button type="submit" class="btn primary">Save person</button></div>' +
+    '</div>' +
+    (!isNew && p.generation != null ? '<aside class="card" style="flex:0 1 280px;padding:20px;margin-top:96px"><h2>Placement</h2><div class="small stack" style="gap:2px">' + lineOf(p).map(function (x, i, arr) { return (i ? '<span aria-hidden="true" style="color:var(--lineage);padding-left:8px">│</span>' : '') + '<span class="gen">' + genLabel(x.generation) + '</span><span class="serif" style="font-size:15px;' + (i === arr.length - 1 ? 'font-weight:600' : '') + '">' + esc(fullName(x)) + '</span>'; }).join('') + '</div><p class="small muted" style="margin:0">Changing a parent re-checks the line: nobody can be their own ancestor, and the clan-line parent must be in the same clan.</p></aside>' : '') +
+    '</form>';
+}
+function genHint(cp, p) {
+  if (p && !p.id) p = null;
+  if (p && isFounder(p)) return 'Founder — stays Gen 1.';
+  if (cp && cp.generation != null) return 'Will be placed at Gen ' + (cp.generation + 1) + '.';
+  if (cp) return 'That parent isn’t numbered yet, so this person won’t be either.';
+  return 'No parent yet — will show as unplaced until one is linked.';
+}
+function assignParents(p, clanId, clanRel, otherId, otherRel) {
+  var cp = byId(clanId), op = byId(otherId);
+  p.father_id = null; p.mother_id = null; p.clan_parent = null;
+  if (!cp) return;
+  var cpMother = cp.sex === 'female' || (cp.sex === 'unknown' && op && op.sex === 'male');
+  if (cpMother) { p.mother_id = cp.id; p.mother_relation = clanRel || 'biological'; p.clan_parent = 'mother'; if (op) { p.father_id = op.id; p.father_relation = otherRel || 'biological'; } }
+  else { p.father_id = cp.id; p.father_relation = clanRel || 'biological'; p.clan_parent = 'father'; if (op) { p.mother_id = op.id; p.mother_relation = otherRel || 'biological'; } }
+  p.clan_id = cp.clan_id; // a child belongs to the clan-line parent's clan (§2.6)
+}
+function formError(html, fld) {
+  document.getElementById('form-error').innerHTML = '<div class="note error" role="alert"><b>Can’t save —</b> ' + html + '</div>';
+  if (fld && document.getElementById(fld)) document.getElementById(fld).classList.add('err');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function submitPerson(form, again) {
+  var fd = new FormData(form);
+  var id = form.getAttribute('data-id') ? +form.getAttribute('data-id') : null;
+  var p = id ? byId(id) : Object.assign(blankPerson(), { clan_id: S.currentClan });
+  var given = (fd.get('given_name') || '').trim();
+  if (!given) return formError('a given name is needed. It’s the only required field.', 'fld-given');
+  var clanId = fd.get('clan_parent_id') ? +fd.get('clan_parent_id') : null;
+  var otherId = fd.get('other_parent_id') ? +fd.get('other_parent_id') : null;
+  var cp = byId(clanId), op = byId(otherId);
+  if (clanId && otherId && clanId === otherId) return formError('the clan-line parent and the other parent are the same person.', 'fld-op');
+  if (cp && cp.clan_id !== p.clan_id) return formError('a parent link can’t cross clans. ' + esc(fullName(cp)) + ' is in the ' + esc(clanLabel(clanOf(cp))) + '.', 'fld-cp');
+  if (!cp && op) return formError('pick the clan-line parent first. The other parent alone doesn’t place anyone in the tree.', 'fld-cp');
+  if (id && (wouldCycle(id, clanId) || wouldCycle(id, otherId))) {
+    var bad = wouldCycle(id, clanId) ? cp : op;
+    return formError(esc(given) + ' can’t be their own ancestor — ' + esc(fullName(bad)) + ' descends from them. Pick a different parent.', wouldCycle(id, clanId) ? 'fld-cp' : 'fld-op');
+  }
+  ['middle_name','last_name','suffix','nickname','birth_date','birth_date_text','birth_place','death_date','death_date_text','death_place','occupation','residence','phone','email','notes','parentage_note','subclan_name'].forEach(function (k) { var v = (fd.get(k) || '').trim(); p[k] = v || null; });
+  p.given_name = given;
+  p.sex = fd.get('sex') || 'unknown';
+  var lv = fd.get('is_living'); p.is_living = lv === 'true' ? true : lv === 'false' ? false : null;
+  p.hide_second_parent = fd.get('hide_second_parent') === 'on';
+  p.is_subclan_head = fd.get('is_subclan_head') === 'on';
+  var oldF = p.father_id, oldM = p.mother_id, oldKey = id ? setKey(oldF, oldM) : null;
+  assignParents(p, clanId, fd.get('clan_relation'), otherId, fd.get('other_relation'));
+  if (!id) { p.id = S.next++; S.people.push(p); }
+  var reqPos = parseInt(fd.get('sibling_order'), 10);
+  if (!hasParents(p)) p.sibling_order = 1;
+  else if (!id || setKey(p.father_id, p.mother_id) !== oldKey) placeInSet(p, reqPos > 0 ? reqPos : null);
+  else if (reqPos > 0 && reqPos !== p.sibling_order) placeInSet(p, reqPos);
+  if (id && oldKey !== setKey(p.father_id, p.mother_id)) normalizeSet(oldF, oldM);
+  updateSubtree(p); save();
+  toast('Saved ' + fullName(p) + (p.generation != null ? ' · Gen ' + p.generation : isUnplaced(p) ? ' · unplaced' : ''));
+  if (again) { go('#/new' + (clanId ? '?parent=' + clanId : '')); render(); } else go('#/person/' + p.id);
+}
+function deletePerson(id) {
+  var p = byId(id); if (!p) return;
+  if (!confirm('Delete ' + fullName(p) + '? Their children stay in the registry but lose this parent link.')) return;
+  var kids = childrenOf(id, true), pf = p.father_id, pm = p.mother_id;
+  S.people.forEach(function (x) { if (x.father_id === id) x.father_id = null; if (x.mother_id === id) x.mother_id = null; });
+  var gone = {}; S.marriages.forEach(function (m) { if (m.husband_id === id || m.wife_id === id) gone[m.id] = 1; });
+  S.photos = S.photos.filter(function (ph) { var drop = ph.person_id === id || gone[ph.marriage_id]; if (drop) imgDel(ph.id); return !drop; });
+  S.marriages = S.marriages.filter(function (m) { return m.husband_id !== id && m.wife_id !== id; });
+  S.clans.forEach(function (c) { if (c.founder_id === id) c.founder_id = null; if (c.founder_spouse_id === id) c.founder_spouse_id = null; });
+  S.people = S.people.filter(function (x) { return x.id !== id; });
+  normalizeSet(pf, pm);
+  var done = {}; kids.forEach(function (k) { var key = setKey(k.father_id, k.mother_id); if (!done[key]) { done[key] = 1; normalizeSet(k.father_id, k.mother_id); } updateSubtree(k); });
+  save(); toast('Deleted ' + fullName(p)); go('#/people');
+}
+function readPhoto(file) {
+  return new Promise(function (res, rej) {
+    var r = new FileReader(); r.onerror = rej;
+    r.onload = function () { var img = new Image(); img.onerror = rej; img.onload = function () { var m = 240, s = Math.min(1, m / Math.max(img.width, img.height)); var cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); res(cv.toDataURL('image/jpeg', 0.82)); }; img.src = r.result; };
+    r.readAsDataURL(file);
+  });
+}
+
+/* ================= Add children ================= */
+function blankK() { return { clan: null, parent: null, other: '', rows: [], inline: null }; }
+var K = blankK();
+function blankRow(last) { return { given_name: '', middle_name: '', last_name: last || '', nickname: '', sex: 'unknown', birth_date_text: '', birth_date: '', rel: 'biological' }; }
+function defaultLast() {
+  var cp = byId(K.parent), op = byId(+K.other);
+  if (cp && cp.sex === 'male') return cp.last_name || '';
+  if (op && op.sex === 'male') return op.last_name || '';
+  return cp ? cp.last_name || '' : '';
+}
+function vChildren(r) {
+  var c = cur();
+  if (K.clan !== c.id || K.inline) K = Object.assign(blankK(), { clan: c.id });
+  if (r.id && K.parent !== r.id) { K.parent = r.id; var sp = spousesOf(r.id); K.other = sp.length ? String(sp[sp.length - 1].id) : ''; K.rows = []; }
+  if (!K.rows.length) for (var i = 0; i < 3; i++) K.rows.push(blankRow(defaultLast()));
+  var cp = byId(K.parent);
+  var spouses = cp ? spousesOf(cp.id) : [];
+  var otherOpts = '<option value="">No other parent recorded</option>' + spouses.map(function (s) { var m = marriagesOf(cp.id).filter(function (m0) { return spouseIn(m0, cp.id) === s.id; })[0]; return '<option value="' + s.id + '"' + sel(K.other, s.id) + '>' + esc(fullName(s)) + (s.clan_id !== cp.clan_id ? ' (' + esc(clanLabel(clanOf(s))) + ')' : '') + (m && (m.date_text || m.date) ? ' — married ' + esc(m.date_text || fmtDate(m.date)) : '') + '</option>'; }).join('');
+  return '<div class="page-head"><div class="grow"><h1 class="display">Add children</h1><p class="muted" style="margin:0">Type a whole family in one pass, first child to last — row order is sibling order. Only a name is needed; Enter in the last row adds another.</p></div></div>' +
+    '<section class="card" style="flex-direction:row;flex-wrap:wrap;gap:24px;align-items:flex-end;margin-bottom:24px">' +
+    '<div class="field clan" style="flex:1 1 300px"><label class="label" for="k-parent">Clan-line parent · ' + esc(clanLabel(c)) + '</label><select class="input" id="k-parent"><option value="">— Choose a parent —</option>' + personOptions(K.parent, null, function (x) { return x.generation != null; }) + '</select>' + (cp ? '' : '<span class="hint">Only people already numbered in this clan are listed.</span>') + '</div>' +
+    '<div class="field" style="flex:1 1 300px"><label class="label" for="k-other">Other parent (optional)</label><select class="input" id="k-other"' + (cp ? '' : ' disabled') + '>' + otherOpts + '</select><span class="hint">The parent’s recorded spouses. Leave blank for a solo parent or when the family didn’t name them.</span></div>' +
+    (cp ? '<div style="flex:0 1 260px">' + pnode(cp, { clan: true }) + '</div>' : '') + '</section>' +
+    kidsRows(false) +
+    '<div class="row" style="margin-top:20px"><p class="small muted" style="flex-grow:1;margin:0" id="k-summary">' + kidsSummary() + '</p><a class="btn" href="' + (cp ? '#/person/' + cp.id : '#/people') + '">Cancel</a><button class="btn primary" data-act="save-kids" id="k-save">' + saveKidsLabel() + '</button></div>';
+}
+function saveKidsLabel() { var n = K.rows.filter(function (x) { return (x.given_name || x.nickname).trim(); }).length; return 'Save ' + n + ' ' + (n === 1 ? 'child' : 'children'); }
+function kidsRows(compact) {
+  var pr = kidsPair(), existing = pr ? setMembers(pr[0], pr[1]).length : 0;
+  var cols = compact ? '40px minmax(120px,1.3fr) minmax(100px,1fr) minmax(100px,1.1fr) 110px minmax(110px,1fr) 40px' : '40px minmax(120px,1.3fr) minmax(100px,1fr) minmax(90px,1fr) minmax(100px,1.1fr) 110px minmax(110px,1fr) 150px 120px 40px';
+  var minw = compact ? 760 : 1120;
+  var head = compact ? ['#', 'Given name', 'Nickname', 'Last name', 'Sex', 'Born, as written', ''] : ['#', 'Given name', 'Nickname', 'Middle', 'Last name', 'Sex', 'Born, as written', 'Exact date', 'Relation', ''];
+  return '<section class="kids" aria-label="Children, first to last"><div class="krow h" style="grid-template-columns:' + cols + ';min-width:' + minw + 'px">' + head.map(function (h) { return '<span>' + h + '</span>'; }).join('') + '</div>' +
+    K.rows.map(function (x, i) {
+      var n = existing + i + 1;
+      var f = function (k, label, extra) { return '<input class="input" data-k="' + k + '" aria-label="' + label + ', child ' + n + '" value="' + esc(x[k]) + '"' + (extra || '') + '>'; };
+      var sex = '<select class="input" data-k="sex" aria-label="Sex, child ' + n + '"><option value="unknown"' + sel(x.sex, 'unknown') + '>—</option><option value="male"' + sel(x.sex, 'male') + '>Male</option><option value="female"' + sel(x.sex, 'female') + '>Female</option></select>';
+      var cells = compact ? [f('given_name', 'Given name', ' placeholder="Given name"'), f('nickname', 'Nickname'), f('last_name', 'Last name'), sex, f('birth_date_text', 'Born as written', ' placeholder="abt. 1930"')]
+        : [f('given_name', 'Given name', ' placeholder="Given name"'), f('nickname', 'Nickname'), f('middle_name', 'Middle name'), f('last_name', 'Last name'), sex, f('birth_date_text', 'Born as written', ' placeholder="abt. 1930"'), f('birth_date', 'Exact date', ' type="date"'),
+          '<select class="input" data-k="rel" aria-label="Relation, child ' + n + '">' + ['biological','adopted','step','foster'].map(function (r0) { return '<option value="' + r0 + '"' + sel(x.rel, r0) + '>' + r0[0].toUpperCase() + r0.slice(1) + '</option>'; }).join('') + '</select>'];
+      return '<div class="krow" data-row="' + i + '" style="grid-template-columns:' + cols + ';min-width:' + minw + 'px"><span class="serif" style="font-weight:600;color:var(--gilt)" title="Position among siblings">' + n + '</span>' + cells.join('') +
+        '<button type="button" class="btn icon sm" data-act="rm-row" data-i="' + i + '" aria-label="Remove row ' + (i + 1) + '"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button></div>';
+    }).join('') + '<div style="padding:12px 14px"><button type="button" class="btn" data-act="add-row">Add another row</button></div></section>';
+}
+/* [father_id, mother_id] the new children will get — same routing as assignParents. */
+function kidsPair() {
+  var cp = byId(K.parent), op = byId(+K.other); if (!cp) return null;
+  var t = blankPerson(); assignParents(t, cp.id, 'biological', op ? op.id : null, 'biological');
+  return [t.father_id, t.mother_id];
+}
+function kidsSummary() {
+  var cp = byId(K.parent), op = byId(+K.other);
+  if (!cp) return 'Choose the clan-line parent first.';
+  var pair = kidsPair();
+  var ex = setMembers(pair[0], pair[1]).length;
+  return 'Each child gets ' + esc(fullName(cp)) + (op ? ' and ' + esc(fullName(op)) + (op.clan_id !== cp.clan_id ? ' (' + esc(clanLabel(clanOf(op))) + ')' : '') : '') + ' as parents, joins the ' + esc(clanLabel(clanOf(cp))) + ' at Gen ' + ((cp.generation || 0) + 1) + (ex ? ', and follows the ' + ex + ' already recorded (numbered from ' + (ex + 1) + ')' : '') + '. Empty rows are skipped.';
+}
+function wireChildren() {
+  var sec = $main.querySelector('.kids'); if (!sec) return;
+  sec.addEventListener('input', function (e) {
+    var row = e.target.closest('[data-row]'); if (!row) return;
+    K.rows[+row.getAttribute('data-row')][e.target.getAttribute('data-k')] = e.target.value;
+    document.getElementById('k-save').textContent = saveKidsLabel();
+  });
+  sec.addEventListener('change', function (e) {
+    var row = e.target.closest('[data-row]'); if (!row) return;
+    K.rows[+row.getAttribute('data-row')][e.target.getAttribute('data-k')] = e.target.value;
+  });
+  sec.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return; e.preventDefault();
+    var row = e.target.closest('[data-row]'); if (!row) return;
+    var i = +row.getAttribute('data-row');
+    if (i === K.rows.length - 1) { K.rows.push(blankRow(defaultLast())); render(); }
+    var next = $main.querySelector('[data-row="' + (i + 1) + '"] input'); if (next) next.focus();
+  });
+  var kp = document.getElementById('k-parent');
+  if (kp) kp.addEventListener('change', function (e) {
+    K.parent = e.target.value ? +e.target.value : null;
+    var sp = K.parent ? spousesOf(K.parent) : []; K.other = sp.length ? String(sp[sp.length - 1].id) : '';
+    var last = defaultLast(); K.rows.forEach(function (x) { if (!x.given_name) x.last_name = last; });
+    render();
+  });
+  var ko = document.getElementById('k-other');
+  if (ko) ko.addEventListener('change', function (e) { K.other = e.target.value; render(); });
+}
+function saveKids() {
+  var cp = byId(K.parent);
+  if (!cp) { toast('Choose the clan-line parent first.'); return; }
+  var rows = K.rows.filter(function (x) { return (x.given_name || '').trim() || (x.nickname || '').trim(); });
+  if (!rows.length) { toast('Type at least one name or nickname.'); return; }
+  rows.forEach(function (x) {
+    var p = blankPerson();
+    ['given_name','middle_name','last_name','nickname','birth_date_text','birth_date'].forEach(function (k) { p[k] = (x[k] || '').trim() || null; });
+    if (!p.given_name) { p.given_name = p.nickname; p.nickname = null; p.notes = 'Known only by this nickname.'; } // nickname alone stands in as the name
+    p.sex = x.sex || 'unknown';
+    assignParents(p, cp.id, x.rel, K.other ? +K.other : null, 'biological');
+    p.sibling_order = nextOrder(p.father_id, p.mother_id); // row order is sibling order, after any already recorded
+    p.id = S.next++; S.people.push(p); updateSubtree(p);
+  });
+  save();
+  toast('Saved ' + rows.length + (rows.length === 1 ? ' child' : ' children') + ' of ' + fullName(cp));
+  var pid = cp.id; K = blankK();
+  if (location.hash === '#/person/' + pid) render(); else go('#/person/' + pid);
+}
+/* ================= Tree layout ================= */
+var NODE_W = 176, NODE_H = 92, JOIN_W = 52, GAP = 24, VGAP = 72;
+/* §5 — ONE descendants query serves tree, outline and print; the controls are its parameters. */
+/* §5 — ONE descendants query serves tree, outline and print; the controls are its parameters.
+   It walks every child link downward whatever clan each child is a member of (§2.7),
+   never upward, and draws each person once: first and shortest path wins. */
+function descTree(startId, depth, collapsed) {
+  var minD = {}; minD[startId] = 0; var q = [startId];
+  while (q.length) { var x = q.shift(); if (minD[x] >= depth - 1) continue; childrenOf(x).forEach(function (k) { if (!(k.id in minD)) { minD[k.id] = minD[x] + 1; q.push(k.id); } }); }
+  var seen = {};
+  function build(id, d) {
+    var p = byId(id); if (!p || seen[id]) return null; seen[id] = true;
+    var sps = spousesOf(id).filter(function (s0) { return !seen[s0.id] || isFounder(s0); });
+    var all = childrenOf(id);
+    var node = { p: p, sps: sps, kids: [], d: d, nKids: all.length, collapsed: !!(collapsed && collapsed[id]) && all.length > 0, cut: false, total: 0 };
+    if (all.length) {
+      if (d >= depth - 1) { node.cut = true; node.total = Object.keys(descendants(id)).length - 1; }
+      else all.forEach(function (k) { if (minD[k.id] === d + 1 && !seen[k.id]) { var n = build(k.id, d + 1); if (n) node.kids.push(n); } });
+    }
+    // counts mean "people in this chart" at this root and depth (§2.7)
+    if (!node.cut) node.total = node.kids.reduce(function (s0, k) { return s0 + 1 + k.total; }, 0);
+    if (node.collapsed) node.kids = [];
+    return node;
+  }
+  return build(startId, 0);
+}
+/* Generation shown in a chart is depth along the path walked from the root being viewed (§2.7). */
+function chartGen(root, node, relative) {
+  if (relative) return node.d;
+  return root.p.generation == null ? null : root.p.generation + node.d;
+}
+function sizeTree(node) {
+  node.kids.forEach(sizeTree);
+  node.uw = NODE_W * (1 + node.sps.length) + JOIN_W * node.sps.length;
+  node.kw = node.kids.reduce(function (s0, k) { return s0 + k.w; }, 0) + GAP * Math.max(0, node.kids.length - 1);
+  node.w = Math.max(node.uw, node.kw);
+  return node;
+}
+function placeTree(node, x, y, out) {
+  var ux = x + (node.w - node.uw) / 2;
+  var cx = ux + NODE_W / 2;
+  out.units.push({ node: node, x: ux, y: y, cx: cx });
+  if (node.kids.length) {
+    var kx = x + (node.w - node.kw) / 2, cy = y + NODE_H + VGAP, bar = y + NODE_H + VGAP / 2;
+    var centers = [];
+    node.kids.forEach(function (k) { var c = placeTree(k, kx, cy, out); centers.push(c); kx += k.w + GAP; });
+    var lo = Math.min.apply(null, centers.concat([cx])), hi = Math.max.apply(null, centers.concat([cx]));
+    var d = 'M' + cx + ' ' + (y + NODE_H) + 'V' + bar + 'M' + lo + ' ' + bar + 'H' + hi;
+    centers.forEach(function (c) { d += 'M' + c + ' ' + bar + 'V' + cy; });
+    out.paths.push(d);
+  }
+  out.h = Math.max(out.h, y + NODE_H);
+  return cx;
+}
+/* opts: dates, photos, redact, hidden, print, selected, rootId (null = absolute numbering) */
+function treeHtml(startId, depth, opts) {
+  var root = descTree(startId, depth, opts.collapsed);
+  if (root) sizeTree(root);
+  if (!root) return { html: '', w: 0, h: 0, maxRow: 0 };
+  var clanId = root.p.clan_id;
+  var out = { units: [], paths: [], h: 0 };
+  placeTree(root, 0, 0, out);
+  var W = root.w, H = out.h;
+  var box = function (p, x, y, clan, d) {
+    var hideDates = opts.redact && p.is_living;
+    var dt = opts.dates && !hideDates ? span(p) : '';
+    var hid = '';
+    if (opts.hidden && p.hide_second_parent && otherParentId(p)) hid = '<span class="hid">hidden link: ' + esc(fullName(byId(otherParentId(p)))) + '</span>';
+    var oc = p.clan_id !== clanId ? '<span class="oc">' + esc(clanLabel(clanOf(p))) + '</span>' : '';
+    var g = d == null ? null : chartGen(root, { d: d }, !!opts.rootId);
+    var cls = 'tn ' + (clan ? 'clan ' : '') + (isFounder(p) && p.clan_id === clanId ? 'founder ' : '') + (opts.selected === p.id ? 'sel' : '');
+    var living = !opts.print && p.is_living ? (dt ? ' · ' : '') + '<b style="color:var(--living)">Living</b>' : '';
+    var inner = (opts.photos ? photoHtml(p) : '') + '<span class="tx">' + (g != null ? '<span class="gen">' + genLabel(g) + '</span>' : '') + '<span class="nm">' + nameHtml(p) + '</span>' + (dt || living ? '<span class="dt">' + esc(dt) + living + '</span>' : '') + oc + hid + '</span>';
+    var st = 'left:' + x + 'px;top:' + y + 'px;width:' + NODE_W + 'px;height:' + NODE_H + 'px';
+    return opts.print ? '<div class="' + cls + '" style="' + st + '">' + inner + '</div>' : '<a class="' + cls + '" href="#/person/' + p.id + '" style="' + st + '">' + inner + '</a>';
+  };
+  var html = '';
+  out.units.forEach(function (u) {
+    var n = u.node;
+    html += box(n.p, u.x, u.y, true, n.d);
+    var x = u.x + NODE_W;
+    n.sps.forEach(function (s) {
+      var m = marriagesOf(n.p.id).filter(function (m0) { return spouseIn(m0, n.p.id) === s.id; })[0];
+      var yr = m ? (m.date_text || (m.date ? m.date.slice(0, 4) : '')) : '';
+      html += '<div class="join" style="left:' + x + 'px;top:' + u.y + 'px;width:' + JOIN_W + 'px;height:' + NODE_H + 'px" title="Married"><svg width="' + JOIN_W + '" height="2" style="position:absolute;top:' + (NODE_H / 2 - 12) + 'px;left:0"><path d="M0 1H' + JOIN_W + '" stroke="var(--spouse)" stroke-width="1.5"/></svg>=' + (opts.dates && yr ? '<span>' + esc(yr.length > 9 ? yr.slice(0, 9) + '…' : yr) + '</span>' : '') + '</div>';
+      x += JOIN_W;
+      var cofounder = isFounder(s) && isFounder(n.p) && s.clan_id === clanId;
+      html += box(s, x, u.y, cofounder, cofounder ? n.d : null);
+      x += NODE_W;
+    });
+    var by = u.y + NODE_H + 4;
+    if (n.nKids && !n.cut && !opts.print) html += '<button type="button" class="ttg" data-act="collapse" data-id="' + n.p.id + '" style="left:' + (u.cx - (n.collapsed ? 30 : 12)) + 'px;top:' + by + 'px;' + (n.collapsed ? 'width:60px' : '') + '" aria-expanded="' + !n.collapsed + '" aria-label="' + (n.collapsed ? 'Expand' : 'Collapse') + ' ' + esc(fullName(n.p)) + '’s branch">' + (n.collapsed ? '+ ' + n.total : '−') + '</button>';
+    if ((n.cut || (n.collapsed && opts.print))) html += '<div class="tmore" style="left:' + (u.cx - 60) + 'px;top:' + by + 'px;width:120px">' + n.total + ' more below</div>';
+  });
+  var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><path d="' + out.paths.join('') + '" fill="none" stroke="var(--lineage)" stroke-width="1.5"/></svg>';
+  var widest = {}; out.units.forEach(function (u) { widest[u.node.d] = (widest[u.node.d] || 0) + 1 + u.node.sps.length; });
+  var maxRow = Math.max.apply(null, Object.keys(widest).map(function (k) { return widest[k]; }));
+  return { html: svg + html, w: W, h: H + 24, maxRow: maxRow };
+}
+
+/* ================= Tree screen ================= */
+function blankT(cid) { return { clan: cid, start: null, depth: 3, dates: true, photos: false, zoom: null, numbering: 'clan', selected: null, _fromId: null, view: 'tree', collapsed: {}, q: '' }; }
+var T = blankT(null);
+function defaultStart(cid) { var c = clanById(cid); var f = byId(c && c.founder_id); if (f && f.generation != null) return f.id; var x = inClan(cid).filter(function (p) { return p.generation != null; }).sort(bySort)[0]; return x ? x.id : null; }
+function vTree(r) {
+  var c = cur();
+  if (T.clan !== c.id) T = blankT(c.id);
+  if (r.name === 'outline') T.view = 'outline';
+  if (r.id && T._fromId !== r.id) { T._fromId = r.id; T.start = r.id; T.selected = r.id; T.zoom = null; T.collapsed = {}; }
+  var stp = byId(T.start); if (!stp || stp.clan_id !== c.id || stp.generation == null) T.start = defaultStart(c.id);
+  var st = byId(T.start);
+  if (!st) return '<h1 class="display">Tree</h1><div class="card"><p style="margin:0">Nobody in the ' + esc(clanLabel(c)) + ' is numbered yet. Set the founding couple in <a href="#/clanedit/' + c.id + '">Clan settings</a>, then add their children.</p></div>';
+  var line = lineOf(st);
+  var rel = T.numbering === 'relative', tree = T.view === 'tree';
+  var nColl = Object.keys(T.collapsed).filter(function (k) { return T.collapsed[k]; }).length;
+  return '<div class="page-head"><div class="grow"><nav class="crumbs" aria-label="Ancestors">' + line.slice(0, -1).map(function (x) { return '<a href="#" data-act="tree-start" data-id="' + x.id + '">' + esc(fullName(x)) + '</a><span aria-hidden="true">›</span>'; }).join('') + '</nav><h1 class="display">' + (isFounder(st) ? 'The ' + esc(clanLabel(c)) : 'Descendants of ' + esc(fullName(st))) + '</h1><div class="caption">' + esc(caption(c, st, rel).replace(/ · printed .*$/, '')) + '</div></div>' +
+    '<div class="seg" role="group" aria-label="View"><button type="button" data-act="view" data-v="tree" class="' + (tree ? 'on' : '') + '" aria-pressed="' + tree + '" style="padding:0 16px">Tree</button><button type="button" data-act="view" data-v="outline" class="' + (!tree ? 'on' : '') + '" aria-pressed="' + !tree + '" style="padding:0 16px">Outline</button></div>' +
+    '<a class="btn" href="#/print" data-act="print-this">Print this view</a></div>' +
+    '<form class="filters" onsubmit="return false"><div class="field" style="width:320px"><label class="label" for="t-start">Start from</label><select class="input" id="t-start">' + startOptions(T.start, c.id) + '</select></div>' +
+    '<div class="field" style="width:290px"><label class="label" for="t-num">Numbering</label><select class="input" id="t-num"><option value="clan"' + sel(T.numbering, 'clan') + '>From the clan founders (Gen 1)</option><option value="relative"' + sel(T.numbering, 'relative') + '>Start person is Gen 0</option></select></div>' +
+    '<fieldset class="field" style="border:0;padding:0;margin:0"><legend class="label" style="margin-bottom:4px">Generations shown</legend><div class="seg">' + [2, 3, 4, 5, 6, 7, 8, 10].map(function (n) { return '<button type="button" data-act="depth" data-n="' + n + '" class="' + (T.depth === n ? 'on' : '') + '" aria-pressed="' + (T.depth === n) + '">' + n + '</button>'; }).join('') + '</div></fieldset>' +
+    '<label class="check" style="align-self:center"><input type="checkbox" id="t-dates"' + (T.dates ? ' checked' : '') + '>Dates</label><label class="check" style="align-self:center"><input type="checkbox" id="t-photos"' + (T.photos ? ' checked' : '') + '>Photos</label>' +
+    (nColl ? '<button type="button" class="btn sm" data-act="expand-all" style="align-self:center">Expand all (' + nColl + ' collapsed)</button>' : '') +
+    '<span style="flex-grow:1"></span>' + (tree ? '<div class="row" style="gap:4px"><button type="button" class="btn icon" data-act="zoom" data-z="-1" aria-label="Zoom out">−</button><span class="small muted" style="min-width:48px;text-align:center" id="zoom-l"></span><button type="button" class="btn icon" data-act="zoom" data-z="1" aria-label="Zoom in">+</button><button type="button" class="btn" data-act="zoom" data-z="0">Fit</button></div>' : '') + '</form>' +
+    (tree ? '<section class="tree-wrap" aria-label="Descendant chart" id="tree-wrap"><div id="tree-sizer" style="position:relative;margin:0 auto"><div class="tree" id="tree" style="position:absolute;left:32px;top:32px"></div></div></section>' +
+      '<div class="legend"><span class="row" style="gap:8px"><svg width="28" height="10" aria-hidden="true"><path d="M0 5H28" stroke="var(--lineage)" stroke-width="1.5"/></svg>Clan line</span><span class="row" style="gap:8px"><span class="serif" style="color:var(--spouse);font-size:17px">=</span>Married</span><span class="row" style="gap:8px"><span style="width:20px;height:14px;border:2px solid var(--lineage);border-radius:2px"></span>Clan member</span><span class="row" style="gap:8px"><span style="width:20px;height:14px;border:1px solid var(--rule-strong);border-radius:2px"></span>Married in · or from another clan</span><span>Siblings run left to right, first child leftmost, whatever clan each child belongs to. − collapses a branch.</span></div>'
+    : '<section class="card" style="padding:16px 20px;gap:12px" aria-label="Outline"><div class="row" style="align-items:flex-end"><div class="field" style="flex:1 1 320px"><label class="label" for="o-q">Find in outline</label><input class="input" id="o-q" type="search" value="' + esc(T.q) + '" placeholder="Name, nickname or spouse" autocomplete="off"></div><span class="small muted" id="o-count" style="padding-bottom:10px"></span></div><div id="outline-body"></div></section>' +
+      '<p class="small muted">Gen, then position among siblings, then name. Counts are people in this chart — the boxes that will print — including descendants who are members of another clan. Gen is counted along the line from the starting person.</p>');
+}
+/* The outline rendering of the same query (§3.10). */
+function outlineScreenHtml(root, rootId, q) {
+  var toks = (q || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+  var visible = {}, hits = 0;
+  var hl = function (text) {
+    var t = esc(text); if (!toks.length) return t;
+    toks.forEach(function (k) { var e = esc(k).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); t = t.replace(new RegExp('(' + e + ')(?![^<]*>)', 'ig'), '<mark>$1</mark>'); });
+    return t;
+  };
+  var matches = function (p) { if (!toks.length) return false; var hay = (fullName(p) + ' ' + (p.nickname || '') + ' ' + spousesOf(p.id).map(fullName).join(' ')).toLowerCase(); return toks.every(function (k) { return hay.indexOf(k) >= 0; }); };
+  var rows = [];
+  (function walk(n) {
+    var p = n.p; visible[p.id] = true; if (matches(p)) hits++;
+    var g = chartGen(root, n, !!rootId);
+    var tg = n.nKids ? (n.cut ? '<span class="otg cut" title="Deeper than the generations shown" aria-hidden="true" style="display:grid;place-items:center">⋯</span>' : '<button type="button" class="otg" data-act="collapse" data-id="' + p.id + '" aria-expanded="' + !n.collapsed + '" aria-label="' + (n.collapsed ? 'Expand' : 'Collapse') + ' ' + esc(fullName(p)) + '">' + (n.collapsed ? '▸' : '▾') + '</button>') : '<span class="otg none"></span>';
+    var dt = T.dates ? span(p) : '';
+    var sp = n.sps.map(function (s) { return '<a href="#/person/' + s.id + '" style="color:inherit">' + hl(fullName(s) + (s.nickname ? ' “' + s.nickname + '”' : '')) + '</a>' + (s.clan_id !== p.clan_id ? ' <span class="small muted">(' + esc(clanLabel(clanOf(s))) + ')</span>' : ''); }).join(', ');
+    var th = '';
+    if (T.photos) { var pp = primaryPhoto('portrait', 'p:' + p.id); th = pp ? '<img class="othumb" src="' + IMG[pp.id] + '" alt="">' : '<span class="othumb" aria-hidden="true"></span>'; }
+    rows.push('<div class="oln" style="padding-left:' + (8 + n.d * 26) + 'px">' + tg + '<span class="ogen">' + (g == null ? '' : g) + '</span><span class="opos">' + (n.d > 0 ? p.sibling_order + '.' : '') + '</span>' + th + '<span style="flex-grow:1;min-width:0"><a class="onm" href="#/person/' + p.id + '">' + hl(fullName(p)) + (p.nickname ? ' <span class="nk" style="font-weight:400;font-style:italic">“' + hl(p.nickname) + '”</span>' : '') + '</a>' + (p.clan_id !== root.p.clan_id ? ' <span class="badge" title="Member of this clan">' + esc(clanLabel(clanOf(p))) + '</span>' : '') + (dt ? ' <span class="odt">' + esc(dt) + '</span>' : '') + (p.is_living ? ' <span class="badge living">Living</span>' : '') + (sp ? ' <span class="osp">= ' + sp + '</span>' : '') + '</span>' + (n.total ? '<span class="ocount">' + (p.is_subclan_head ? '<span class="badge lineage" style="margin-right:6px">' + esc(p.subclan_name || 'Subclan') + '</span>' : '') + esc(fullName(p)) + ' — ' + n.total + (n.cut ? ' more below' : ' in this chart') + '</span>' : '') + '</div>');
+    n.kids.forEach(walk);
+  })(root);
+  var hidden = 0;
+  if (toks.length) Object.keys(descendants(root.p.id)).forEach(function (id) { if (!visible[id] && matches(byId(id))) hidden++; });
+  return { html: rows.join(''), hits: hits, hidden: hidden, toks: toks.length };
+}
+function drawOutline() {
+  var body = document.getElementById('outline-body'); if (!body) return;
+  var root = descTree(T.start, T.depth, T.collapsed);
+  var o = outlineScreenHtml(root, T.numbering === 'relative' ? T.start : null, T.q);
+  body.innerHTML = o.html;
+  document.getElementById('o-count').textContent = o.toks ? o.hits + ' match' + (o.hits === 1 ? '' : 'es') + ' shown' + (o.hidden ? ' · ' + o.hidden + ' more in collapsed or deeper branches' : '') : '';
+}
+function drawTreeScreen() {
+  var ts = document.getElementById('t-start'); if (!ts) return;
+  ts.onchange = function (e) { T.start = +e.target.value; var p = byId(T.start); T.numbering = p && p.is_subclan_head ? 'relative' : isFounder(p) ? 'clan' : T.numbering; T.zoom = null; T.collapsed = {}; render(); };
+  document.getElementById('t-num').onchange = function (e) { T.numbering = e.target.value; render(); };
+  document.getElementById('t-dates').onchange = function (e) { T.dates = e.target.checked; drawTreeScreen(); };
+  document.getElementById('t-photos').onchange = function (e) { T.photos = e.target.checked; drawTreeScreen(); };
+  if (T.view === 'outline') {
+    var oq = document.getElementById('o-q');
+    oq.oninput = function () { T.q = oq.value; drawOutline(); };
+    drawOutline(); return;
+  }
+  var t = document.getElementById('tree');
+  var res = treeHtml(T.start, T.depth, { dates: T.dates, photos: T.photos, selected: T.selected, collapsed: T.collapsed, rootId: T.numbering === 'relative' ? T.start : null });
+  t.innerHTML = res.html;
+  t.style.width = res.w + 'px'; t.style.height = res.h + 'px';
+  if (T.zoom == null) { var w0 = document.getElementById('tree-wrap'); T.zoom = Math.max(0.3, Math.min(1, (w0.clientWidth - 64) / res.w)); T.zoom = Math.floor(T.zoom * 10) / 10; }
+  document.getElementById('zoom-l').textContent = Math.round(T.zoom * 100) + '%';
+  t.style.transform = 'scale(' + T.zoom + ')';
+  var sizer = document.getElementById('tree-sizer');
+  sizer.style.width = (res.w * T.zoom + 64) + 'px'; sizer.style.height = (res.h * T.zoom + 64) + 'px';
+  T._w = res.w; T._h = res.h;
+}
+/* ================= Print ================= */
+var PRESETS = { tarp: ['Tarpaulin 8 × 4 ft (landscape)', 2438, 1219], a3l: ['A3 landscape', 420, 297], a3p: ['A3 portrait', 297, 420], a4l: ['A4 landscape', 297, 210], a4p: ['A4 portrait', 210, 297], custom: ['Custom', null, null] };
+var PX_PER_MM = 96 / 25.4;
+var P = { clan: null, collapsed: {}, headPhoto: true, format: 'tree', start: null, numbering: 'clan', gens: 3, preset: 'tarp', w: 2438, h: 1219, dates: true, photos: false, redact: true, hidden: false, fit: true, margin: 10 };
+function vPrint() {
+  var c = cur();
+  if (P.clan !== c.id) { P.clan = c.id; P.start = null; P.numbering = 'clan'; }
+  var sp = byId(P.start); if (!sp || sp.clan_id !== c.id || sp.generation == null) P.start = defaultStart(c.id);
+  if (!P.start) return '<h1 class="display">Print</h1><div class="card"><p style="margin:0">Nobody in the ' + esc(clanLabel(c)) + ' is numbered yet. Set the founding couple first in <a href="#/clanedit/' + c.id + '">Clan settings</a>.</p></div>';
+  var presetOpts = Object.keys(PRESETS).map(function (k) { return '<option value="' + k + '"' + sel(P.preset, k) + '>' + PRESETS[k][0] + '</option>'; }).join('');
+  var tree = P.format === 'tree'; P._rendered = P.format;
+  return '<div class="page-head"><div class="grow"><h1 class="display">Print</h1><p class="muted" style="margin:0">Every printout is for one clan — here the <b>' + esc(clanLabel(c)) + '</b>. Print the main chart from the founders, and each subclan from its own head.</p></div></div>' +
+    '<div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap">' +
+    '<form class="card" id="print-form" onsubmit="return false" style="flex:0 0 380px;gap:18px">' +
+    '<fieldset class="field" style="border:0;padding:0;margin:0"><legend class="label" style="margin-bottom:4px">Format</legend><div class="radios" style="flex-direction:column;gap:0"><label><input type="radio" name="format" value="tree"' + (tree ? ' checked' : '') + '>Tree chart</label><label><input type="radio" name="format" value="outline"' + (!tree ? ' checked' : '') + '>Indented outline (one line per person, A4)</label></div></fieldset>' +
+    '<div class="field"><label class="label" for="p-start">Starting person</label><select class="input" id="p-start" name="start">' + startOptions(P.start, c.id) + '</select></div>' +
+    '<fieldset class="field" style="border:0;padding:0;margin:0"><legend class="label" style="margin-bottom:4px">Generation numbering</legend><div class="radios" style="flex-direction:column;gap:0"><label><input type="radio" name="numbering" value="clan"' + (P.numbering === 'clan' ? ' checked' : '') + '>From the clan founders (founding couple = Gen 1)</label><label><input type="radio" name="numbering" value="relative"' + (P.numbering === 'relative' ? ' checked' : '') + '>Relative — starting person is Gen 0</label></div></fieldset>' +
+    '<div class="field" style="width:120px"><label class="label" for="p-gens">Generations</label><input class="input" type="number" min="1" max="12" id="p-gens" name="gens" value="' + P.gens + '"></div>' +
+    (tree ? '<div class="field"><label class="label" for="p-preset">Sheet</label><select class="input" id="p-preset" name="preset">' + presetOpts + '</select></div>' +
+      '<div class="grid2" style="gap:12px"><div class="field"><label class="sub" for="p-w">Width, mm</label><input class="input" type="number" id="p-w" name="w" value="' + P.w + '"></div><div class="field"><label class="sub" for="p-h">Height, mm</label><input class="input" type="number" id="p-h" name="h" value="' + P.h + '"></div></div>' +
+      '<label class="check"><input type="checkbox" name="fit"' + (P.fit ? ' checked' : '') + '><span>Scale to fill the sheet<br><span class="small muted">Enlarges a small chart, shrinks a large one.</span></span></label>' : '') +
+    '<div class="stack" style="gap:6px;border-top:1px solid var(--rule);padding-top:14px">' +
+    '<label class="check"><input type="checkbox" name="dates"' + (P.dates ? ' checked' : '') + '>Show dates</label>' +
+    '<label class="check"><input type="checkbox" name="photos"' + (P.photos ? ' checked' : '') + '><span>Show photos<br><span class="small muted">' + (tree ? 'Main portrait on each box.' : 'Family pictures beside their family.') + '</span></span></label>' +
+    '<label class="check"><input type="checkbox" name="headphoto"' + (P.headPhoto ? ' checked' : '') + '><span>Group photo at the head<br><span class="small muted">Clan group photo for the full clan, the subclan’s own photo for a subclan sheet.</span></span></label>' +
+    '<label class="check"><input type="checkbox" name="redact"' + (P.redact ? ' checked' : '') + '><span>Living people: name only<br><span class="small muted">Hides dates, contact and residence.</span></span></label></div>' +
+    '<label class="check" style="padding:12px;background:var(--warn-soft);border-radius:var(--radius-sm)"><input type="checkbox" name="hidden"' + (P.hidden ? ' checked' : '') + ' style="accent-color:var(--warn)"><span><b>Include hidden parent links</b><br><span class="small">Archive copy only — shows links the family asked to keep out of view.</span></span></label>' +
+    '<button type="button" class="btn primary" data-act="do-print">Print or save as PDF</button><span class="small muted">Opens the browser’s print dialog. Choose “Save as PDF”, and turn on “Background graphics”.</span></form>' +
+    '<section style="flex:1 1 520px;min-width:0" class="stack" aria-label="Print preview"><div class="caption" id="p-caption"></div><div class="row small muted" id="p-status"></div><div class="sheet-wrap" id="p-wrap"><div class="sheet" id="p-sheet"></div></div><div class="small muted" id="p-note"></div></section></div>';
+}
+function readPrintForm() {
+  var f = document.getElementById('print-form'); if (!f) return;
+  var fd = new FormData(f);
+  P.format = fd.get('format') || 'tree';
+  var ns = +fd.get('start') || P.start;
+  if (ns !== P.start) { P.collapsed = {}; var np = byId(ns); if (np && np.is_subclan_head) P.numbering = 'relative'; else if (isFounder(np)) P.numbering = 'clan'; P.start = ns; var radio = f.querySelector('input[name=numbering][value=' + P.numbering + ']'); if (radio) radio.checked = true; }
+  else P.numbering = fd.get('numbering') || 'clan';
+  P.gens = Math.max(1, Math.min(12, +fd.get('gens') || 3));
+  if (fd.get('preset') != null) {
+    var pre = fd.get('preset');
+    if (pre !== P.preset && PRESETS[pre][1]) { P.w = PRESETS[pre][1]; P.h = PRESETS[pre][2]; }
+    else { P.w = +fd.get('w') || P.w; P.h = +fd.get('h') || P.h; if (pre === P.preset && pre !== 'custom' && (P.w !== PRESETS[pre][1] || P.h !== PRESETS[pre][2])) { pre = 'custom'; document.getElementById('p-preset').value = 'custom'; } }
+    P.preset = pre;
+    P.fit = fd.get('fit') === 'on';
+  }
+  P.photos = fd.get('photos') === 'on'; P.headPhoto = fd.get('headphoto') === 'on';
+  P.dates = fd.get('dates') === 'on'; P.redact = fd.get('redact') === 'on'; P.hidden = fd.get('hidden') === 'on';
+}
+function headPhoto() {
+  if (!P.headPhoto) return null;
+  var st = byId(P.start); if (!st) return null;
+  if (isFounder(st)) return primaryPhoto('clan_group', 'c:' + st.clan_id);
+  if (st.is_subclan_head) return primaryPhoto('subclan_group', 'p:' + st.id);
+  return null;
+}
+function printCaption() { var st = byId(P.start); return caption(clanOf(st), st, P.numbering === 'relative') + (P.redact ? ' · living people: name only' : '') + (P.hidden ? ' · ARCHIVE COPY, includes hidden links' : ''); }
+function printTitle() { var st = byId(P.start), c = clanOf(st); if (P.numbering === 'relative' && st.is_subclan_head) return (st.subclan_name || 'Subclan of ' + fullName(st)); return isFounder(st) ? 'The ' + clanLabel(c) : 'Descendants of ' + fullName(st); }
+function printChart() {
+  var res = treeHtml(P.start, P.gens, { dates: P.dates, photos: P.photos, redact: P.redact, hidden: P.hidden, print: true, collapsed: P.collapsed, rootId: P.numbering === 'relative' ? P.start : null });
+  var hp = headPhoto(), pad = 24, hpW = 560, hpH = hp ? Math.round(hpW * ((hp.h || 2) / (hp.w || 3))) : 0;
+  var titleH = 84 + (hp ? hpH + 44 : 0);
+  var chartW = Math.max(res.w, 700) + pad * 2, chartH = res.h + titleH + pad * 2 + 24;
+  var availW = (P.w - 2 * P.margin) * PX_PER_MM, availH = (P.h - 2 * P.margin) * PX_PER_MM;
+  var scale = P.fit ? Math.min(4, availW / chartW, availH / chartH) : 1;
+  var inner = '<div style="position:absolute;left:0;top:' + pad + 'px;width:' + chartW + 'px;text-align:center">' + (hp ? '<img src="' + IMG[hp.id] + '" alt="" style="width:' + hpW + 'px;height:' + hpH + 'px;object-fit:cover;display:block;margin:0 auto"><div style="font:italic 12px/16px var(--font-sans);color:#333;margin:6px 0 14px">' + esc(phCaption(hp)) + '</div>' : '') + '<div style="font:600 30px/36px var(--font-serif)">' + esc(printTitle()) + '</div><div style="font:italic 13px/18px var(--font-sans);color:#333;margin-top:4px">' + esc(printCaption()) + '</div></div>' +
+    '<div class="tree" style="position:absolute;left:' + (pad + (chartW - 2 * pad - res.w) / 2) + 'px;top:' + (titleH + pad) + 'px;width:' + res.w + 'px;height:' + res.h + 'px">' + res.html + '</div>';
+  return { inner: inner, w: chartW, h: chartH, scale: scale, maxRow: res.maxRow, availW: availW, availH: availH };
+}
+function outlineHtml() {
+  var rootId = P.numbering === 'relative' ? P.start : null;
+  var root = descTree(P.start, P.gens, P.collapsed);
+  var lines = [];
+  (function walk(n) { lines.push(n); n.kids.forEach(walk); })(root);
+  var dt = function (p) { return !P.dates || (P.redact && p.is_living) ? '' : span(p); };
+  var hp = headPhoto();
+  var fam = function (p) {
+    if (!P.photos) return '';
+    var list = marriagesOf(p.id).map(function (m) { return primaryPhoto('family', 'm:' + m.id); }).concat([primaryPhoto('family', 'p:' + p.id)]).filter(Boolean);
+    return list.map(function (ph) { return '<figure style="margin:4pt 0 8pt;padding-left:' + 0 + 'pt;break-inside:avoid"><img src="' + IMG[ph.id] + '" alt="" style="width:62mm;display:block"><figcaption style="font-size:8.5pt;color:#333;margin-top:2pt">' + esc(phCaption(ph) || 'Family picture') + '</figcaption></figure>'; }).join('');
+  };
+  return '<div class="outline">' + (hp ? '<figure style="margin:0 0 10pt"><img src="' + IMG[hp.id] + '" alt="" style="max-width:100%;max-height:95mm;display:block;margin:0 auto"><figcaption style="font-size:9pt;color:#333;text-align:center;margin-top:3pt">' + esc(phCaption(hp)) + '</figcaption></figure>' : '') + '<h1>' + esc(printTitle()) + '</h1><div class="meta">' + esc(printCaption()) + ' · one line per person, siblings in recorded order</div>' +
+    lines.map(function (l) {
+      var p = l.p;
+      var hid = P.hidden && p.hide_second_parent && otherParentId(p) ? ' <i>(hidden link: ' + esc(fullName(byId(otherParentId(p)))) + ')</i>' : '';
+      var g = chartGen(root, l, P.numbering === 'relative');
+      var more = (l.collapsed || l.cut) && l.total ? ' <span class="dd">[' + l.total + ' more below, printed separately]</span>' : '';
+      return '<div class="ln" style="padding-left:' + (l.d * 18) + 'pt"><span class="gn">' + (g == null ? '' : g) + '</span><span>' + (l.d > 0 ? p.sibling_order + '. ' : '') + '<b>' + esc(fullName(p)) + '</b>' + (p.nickname ? ' “' + esc(p.nickname) + '”' : '') + (p.clan_id !== root.p.clan_id ? ' (' + esc(clanLabel(clanOf(p))) + ')' : '') + (dt(p) ? ' <span class="dd">' + esc(dt(p)) + '</span>' : '') + (l.sps.length ? ' = ' + l.sps.map(function (s) { return esc(fullName(s)) + (s.nickname ? ' “' + esc(s.nickname) + '”' : '') + (s.clan_id !== p.clan_id ? ' (' + esc(clanLabel(clanOf(s))) + ')' : ''); }).join(', ') : '') + hid + more + '</span></div>' + (fam(p) ? '<div style="padding-left:' + (l.d * 18 + 22) + 'pt">' + fam(p) + '</div>' : '');
+    }).join('') + '</div>';
+}
+function drawPrintPreview() {
+  readPrintForm();
+  var wrap = document.getElementById('p-wrap'), sheet = document.getElementById('p-sheet'); if (!sheet) return;
+  sheet.setAttribute('data-theme', 'print');
+  document.getElementById('p-caption').textContent = 'Caption: ' + printCaption();
+  var status = document.getElementById('p-status'), note = document.getElementById('p-note');
+  var boxW = wrap.clientWidth - 40;
+  if (P.format === 'outline') {
+    var pw = 210 * PX_PER_MM, s = Math.min(1, boxW / pw);
+    sheet.style.width = pw * s + 'px'; sheet.style.height = 'auto'; sheet.style.maxHeight = '900px'; sheet.style.overflow = 'auto';
+    sheet.innerHTML = '<div style="width:' + (pw - 30 * PX_PER_MM) + 'px;padding:' + (15 * PX_PER_MM) + 'px;transform:scale(' + s + ');transform-origin:0 0;font-family:var(--font-sans)">' + outlineHtml() + '</div>';
+    status.textContent = 'Preview · A4 portrait · pages break automatically when printed';
+    note.textContent = 'The outline is the practical form for the full record — one line per person.';
+    return;
+  }
+  sheet.style.overflow = 'hidden'; sheet.style.maxHeight = '';
+  var c = printChart();
+  var sheetPxW = P.w * PX_PER_MM, sheetPxH = P.h * PX_PER_MM;
+  var ps = Math.min(boxW / sheetPxW, 560 / sheetPxH);
+  sheet.style.width = sheetPxW * ps + 'px'; sheet.style.height = sheetPxH * ps + 'px';
+  var m = P.margin * PX_PER_MM;
+  sheet.innerHTML = '<div style="position:absolute;left:0;top:0;width:' + sheetPxW + 'px;height:' + sheetPxH + 'px;transform:scale(' + ps + ');transform-origin:0 0;background:#fff;color:#000;font-family:var(--font-sans)"><div style="position:absolute;left:' + m + 'px;top:' + m + 'px;width:' + c.w + 'px;height:' + c.h + 'px;transform:scale(' + c.scale + ');transform-origin:0 0">' + c.inner + '</div></div>';
+  var nodeMm = NODE_W * c.scale / PX_PER_MM;
+  var fits = c.w * c.scale <= c.availW + 1 && c.h * c.scale <= c.availH + 1;
+  var across = Math.floor((P.w - 2 * P.margin) / 45);
+  status.innerHTML = '<span style="flex-grow:1">Preview · ' + P.w + ' × ' + P.h + ' mm · widest row ' + c.maxRow + ' boxes · sheet holds ≈' + across + ' across at 45 mm</span>' +
+    (!fits ? '<span class="badge danger">Doesn’t fit</span>' : nodeMm < 44.5 ? '<span class="badge warn">Names below 45 mm</span>' : '<span class="badge lineage">Fits</span>');
+  note.innerHTML = !fits ? 'The chart runs off the sheet. Tick “Scale to fill the sheet”, show fewer generations, or print a subclan from its own head.' :
+    nodeMm < 44.5 ? 'Scaled to fit: each name box is about ' + nodeMm.toFixed(0) + ' mm wide — below the 45 mm needed to read comfortably. Show fewer generations or print subclans separately.' :
+    'Each name box prints about ' + nodeMm.toFixed(0) + ' mm wide.';
+}
+function doPrint() {
+  readPrintForm();
+  var root = document.getElementById('print-root');
+  root.setAttribute('data-theme', 'print');
+  var ps = document.getElementById('page-size');
+  if (P.format === 'outline') {
+    ps.textContent = '@page { size: 210mm 297mm; margin: 15mm; }';
+    root.innerHTML = outlineHtml();
+  } else {
+    var c = printChart();
+    ps.textContent = '@page { size: ' + P.w + 'mm ' + P.h + 'mm; margin: ' + P.margin + 'mm; }';
+    root.innerHTML = '<div style="position:relative;width:' + (c.w * c.scale) + 'px;height:' + (c.h * c.scale) + 'px;background:#fff;color:#000;font-family:var(--font-sans);-webkit-print-color-adjust:exact;print-color-adjust:exact"><div style="position:absolute;left:0;top:0;width:' + c.w + 'px;height:' + c.h + 'px;transform:scale(' + c.scale + ');transform-origin:0 0">' + c.inner + '</div></div>';
+  }
+  setTimeout(function () { window.print(); }, 50);
+}
+
+/* ================= backup ================= */
+function stamp() { var d = new Date(), z = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '-' + z(d.getHours()) + z(d.getMinutes()); }
+function backup(tag) {
+  S.lastBackup = Date.now(); save();
+  var data = Object.assign({}, S); delete data.imgInline;
+  var blob = new Blob([JSON.stringify({ app: 'clan-family-tree', version: 3, exported: new Date().toISOString(), data: data, images: IMG })], { type: 'application/json' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'clan-backup-' + (typeof tag === 'string' ? tag + '-' : '') + stamp() + '.json';
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast('Backup of all clans' + ((S.photos || []).length ? ' and ' + S.photos.length + ' photos' : '') + ' downloaded — keep a copy off this computer too.'); renderNav(route());
+}
+function downloadText(text, name) {
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function restore(file) {
+  var r = new FileReader();
+  r.onload = function () {
+    try {
+      var j = JSON.parse(r.result); var d = j.data || j;
+      if (!Array.isArray(d.people) || !Array.isArray(d.marriages)) throw new Error('not a backup');
+      if (!Array.isArray(d.clans)) d = migrateV1(d);
+      if (!confirm('Replace everything in this browser with the backup (' + d.clans.length + ' clans, ' + d.people.length + ' people)?')) return;
+      d.theme = S.theme; S = d; if (!S.photos) S.photos = []; imgClearAll(); var imgs = j.images || d.imgInline || {}; delete S.imgInline; Object.keys(imgs).forEach(function (k) { imgPut(+k, imgs[k]); }); migratePhotos(); ensureOrder(); S.clans.forEach(function (c) { recomputeClan(c.id); }); if (!cur()) S.currentClan = (liveClans()[0] || {}).id || null;
+      save(); toast('Restored ' + S.people.length + ' people in ' + S.clans.length + ' clans.'); go('#/clans'); render();
+    } catch (e) { toast('That file isn’t a Clan Family Tree backup.'); }
+  };
+  r.readAsText(file);
+}
+
+/* ================= events ================= */
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-act]'); if (!t) return;
+  var act = t.getAttribute('data-act'), id = +t.getAttribute('data-id');
+  if (act === 'backup') backup();
+  else if (act === 'theme') { S.theme = S.theme === 'lamplight' ? 'paper' : 'lamplight'; save(); render(); }
+  else if (act === 'reset') { PH = { add: null, edit: null }; if (confirm('Reset the demo? This replaces everything in this browser with the three sample clans.')) { seed(); go('#/clans'); render(); toast('Sample clans restored.'); } }
+  else if (act === 'open-clan') { S.currentClan = id; save(); go('#/people'); }
+  else if (act === 'restore-clan') { clanById(id).deleted_at = null; save(); render(); toast('Restored the ' + clanLabel(clanById(id))); }
+  else if (act === 'delete-clan') {
+    var c = clanById(id), n = inClan(id).length;
+    if (confirm('Delete the ' + clanLabel(c) + '? Its ' + n + ' people go with it. You can restore it from the clan list.')) { c.deleted_at = Date.now(); if (S.currentClan === id) S.currentClan = (liveClans()[0] || {}).id || null; save(); go('#/clans'); toast('Deleted the ' + clanLabel(c) + ' (' + n + ' people).'); }
+  }
+  else if (act === 'founder-cancel') { var c0 = clanById(F.clan); F.founder = c0.founder_id; F.spouse = c0.founder_spouse_id ? String(c0.founder_spouse_id) : ''; render(); }
+  else if (act === 'founder-apply') {
+    backup('before-renumbering');
+    var cl = clanById(F.clan); var prev = foundersText(cl);
+    var oldF = byId(cl.founder_id);
+    cl.founder_id = F.founder; cl.founder_spouse_id = F.spouse ? +F.spouse : null;
+    var line = 'Previous founding couple: ' + prev + ' (until ' + longDate(new Date()) + ').';
+    cl.notes = (cl.notes ? cl.notes + '\n' : '') + line;
+    var n2 = recomputeClan(cl.id); save(); F.clan = null;
+    toast('Renumbered the ' + clanLabel(cl) + ': ' + n2 + ' people numbered.' + (oldF && oldF.generation != null ? ' ' + fullName(oldF) + ' is now Gen ' + oldF.generation + '.' : ''));
+    render();
+  }
+  else if (act === 'print-subclan') { var h = byId(id); P.collapsed = {}; P.clan = h.clan_id; S.currentClan = h.clan_id; P.start = id; P.numbering = 'relative'; P.format = 'tree'; go('#/print'); }
+  else if (act === 'add-marriage') { M = { open: true, person: route().id, id: null, sel: null, create: false, q: '' }; render(); var mq = document.getElementById('m-q'); if (mq) mq.focus(); }
+  else if (act === 'edit-marriage') { var mm = mById(id), pid0 = route().id; M = { open: true, person: pid0, id: id, sel: spouseIn(mm, pid0), create: false, q: '' }; render(); }
+  else if (act === 'cancel-marriage') { M = { open: false }; render(); }
+  else if (act === 'del-marriage') { if (confirm('Remove this marriage record? The people stay; its family pictures are deleted.')) { S.photos = S.photos.filter(function (ph) { if (ph.marriage_id === id) { imgDel(ph.id); return false; } return true; }); S.marriages = S.marriages.filter(function (m) { return m.id !== id; }); M = { open: false }; save(); render(); } }
+  else if (act === 'm-pick') { M.sel = id; M.create = false; document.getElementById('m-pick').innerHTML = pickHtml(byId(M.person)); }
+  else if (act === 'm-change' || act === 'm-search') { M.sel = null; M.create = false; document.getElementById('m-pick').innerHTML = pickHtml(byId(M.person)); wireMarriage(); var q2 = document.getElementById('m-q'); if (q2) q2.focus(); }
+  else if (act === 'm-create') { M.create = true; M.sel = null; var words = (M.q || '').trim(); M.prefill = words; document.getElementById('m-pick').innerHTML = pickHtml(byId(M.person)); var g0 = document.getElementById('m-g'); if (g0) g0.focus(); }
+  else if (act === 'sib-move') { var sp0 = byId(id); if (moveSibling(sp0, +t.getAttribute('data-dir'))) { save(); render(); toast(fullName(sp0) + ' is now child ' + sp0.sibling_order + ' of ' + siblingsOf(sp0).length + '.'); } }
+  else if (act === 'kids-inline') { var pp = byId(id); var sps0 = spousesOf(id); K = Object.assign(blankK(), { clan: pp.clan_id, parent: id, inline: id, other: sps0.length ? String(sps0[sps0.length - 1].id) : '' }); for (var ri = 0; ri < 3; ri++) K.rows.push(blankRow(defaultLast())); render(); var fi = $main.querySelector('[data-row="0"] input'); if (fi) fi.focus(); }
+  else if (act === 'kids-cancel') { K = blankK(); render(); }
+  else if (act === 'collapse') { T.collapsed[id] = !T.collapsed[id]; drawTreeScreen(); if (T.view === 'tree') {} var eb = $main.querySelector('[data-act=expand-all]'); if (!eb && Object.keys(T.collapsed).some(function (k) { return T.collapsed[k]; })) render(); }
+  else if (act === 'view') { T.view = t.getAttribute('data-v'); if (route().name !== 'tree') go('#/tree'); else render(); }
+  else if (act === 'show-in-tree') {
+    /* §3.1 — that person becomes the starting person; view mode, depth and numbering are kept */
+    var sp1 = byId(id);
+    if (sp1.clan_id !== S.currentClan) { S.currentClan = sp1.clan_id; save(); toast('Switched to the ' + clanLabel(clanOf(sp1)) + ' — showing ' + fullName(sp1) + '’s family.'); }
+    if (T.clan !== sp1.clan_id) { var keep = { view: T.view, depth: T.depth, numbering: T.numbering, dates: T.dates, photos: T.photos }; T = Object.assign(blankT(sp1.clan_id), keep); }
+    T.start = id; T.selected = id; T.zoom = null; T.collapsed = {}; T._fromId = null;
+    if (route().name === 'tree') render(); else go('#/tree');
+  }
+  else if (act === 'ph-add') { PH = { add: t.getAttribute('data-k'), edit: null }; render(); var fi2 = document.getElementById('ph-file'); if (fi2) fi2.focus(); }
+  else if (act === 'ph-edit') { PH = { add: null, edit: id }; render(); }
+  else if (act === 'ph-cancel') { PH = { add: null, edit: null }; render(); }
+  else if (act === 'ph-primary') { var ph0 = S.photos.filter(function (x) { return x.id === id; })[0]; var key0 = ph0.marriage_id ? 'm:' + ph0.marriage_id : ph0.person_id ? 'p:' + ph0.person_id : 'c:' + ph0.clan_id; photosOf(ph0.kind, key0).forEach(function (x) { x.is_primary = x.id === id; }); save(); render(); toast('Main picture changed.'); }
+  else if (act === 'ph-del') { var ph1 = S.photos.filter(function (x) { return x.id === id; })[0]; if (confirm('Delete this photo from the app? Your camera original is not affected.')) { var key1 = ph1.marriage_id ? 'm:' + ph1.marriage_id : ph1.person_id ? 'p:' + ph1.person_id : 'c:' + ph1.clan_id; S.photos = S.photos.filter(function (x) { return x.id !== id; }); imgDel(id); if (ph1.is_primary) { var rest = photosOf(ph1.kind, key1); if (rest[0]) rest[0].is_primary = true; } save(); render(); } }
+  else if (act === 'expand-all') { T.collapsed = {}; T.zoom = null; render(); }
+  else if (act === 'delete-person') deletePerson(id);
+  else if (act === 'clear-photo') { pendingPhoto = null; document.getElementById('photo-prev').innerHTML = '<span class="photo lg">–</span>'; t.remove(); }
+  else if (act === 'add-row') { K.rows.push(blankRow(defaultLast())); render(); if (K.inline) wireChildren(); var last = $main.querySelector('[data-row="' + (K.rows.length - 1) + '"] input'); if (last) last.focus(); }
+  else if (act === 'rm-row') { K.rows.splice(+t.getAttribute('data-i'), 1); render(); }
+  else if (act === 'save-kids') saveKids();
+  else if (act === 'depth') { T.depth = +t.getAttribute('data-n'); T.zoom = null; render(); }
+  else if (act === 'tree-start') { e.preventDefault(); T.start = id; T.zoom = null; render(); }
+  else if (act === 'zoom') {
+    var z = +t.getAttribute('data-z');
+    if (z === 0) { var w = document.getElementById('tree-wrap'); T.zoom = Math.max(0.2, Math.min(1, (w.clientWidth - 64) / T._w, (w.clientHeight - 64) / T._h)); }
+    else T.zoom = Math.max(0.2, Math.min(2, Math.round(((T.zoom || 1) + z * 0.1) * 10) / 10));
+    drawTreeScreen();
+  }
+  else if (act === 'print-this') { P.clan = T.clan; P.start = T.start; P.gens = T.depth; P.dates = T.dates; P.photos = T.photos; P.format = T.view; P.numbering = T.numbering; P.collapsed = Object.assign({}, T.collapsed); }
+  else if (act === 'do-print') doPrint();
+});
+document.addEventListener('submit', function (e) {
+  var f = e.target;
+  if (f.classList && f.classList.contains('phform')) {
+    e.preventDefault();
+    var file = f.querySelector('input[type=file]').files[0];
+    if (!file) { toast('Choose an image first.'); return; }
+    var kind = f.getAttribute('data-kind'), key = f.getAttribute('data-key'), cidp = +f.getAttribute('data-clan');
+    var yr = (f.querySelector('[name=year]').value || '').trim();
+    if (yr && !/^\d{4}$/.test(yr)) { toast('Year should be four digits, like 1998 — or leave it blank.'); return; }
+    var cap = (f.querySelector('[name=caption]').value || '').trim() || null;
+    resizeImg(file, kind === 'portrait' ? 480 : 1400).then(function (r0) {
+      var t0 = key.charAt(0), n0 = +key.slice(2);
+      var first = !photosOf(kind, key).length;
+      var rec = { id: S.next++, clan_id: cidp, person_id: t0 === 'p' ? n0 : null, marriage_id: t0 === 'm' ? n0 : null, kind: kind, caption: cap, year: yr ? +yr : null, is_primary: first, w: r0.w, h: r0.h };
+      S.photos.push(rec); imgPut(rec.id, r0.data); PH = { add: null, edit: null }; save(); render();
+      toast(PHOTO_KINDS[kind] + ' saved' + (first ? ' as the main picture.' : '.') + (yr ? '' : ' Add the year if anyone remembers it.'));
+    }).catch(function () { toast('Couldn’t read that image.'); });
+    return;
+  }
+  if (f.hasAttribute && f.hasAttribute('data-ph-edit')) {
+    e.preventDefault();
+    var pid2 = +f.getAttribute('data-ph-edit'), ph2 = S.photos.filter(function (x) { return x.id === pid2; })[0];
+    var y2 = (f.querySelector('[name=year]').value || '').trim();
+    if (y2 && !/^\d{4}$/.test(y2)) { toast('Year should be four digits, like 1998 — or leave it blank.'); return; }
+    ph2.caption = (f.querySelector('[name=caption]').value || '').trim() || null; ph2.year = y2 ? +y2 : null;
+    PH = { add: null, edit: null }; save(); render(); return;
+  }
+  if (f.id === 'person-form') { e.preventDefault(); submitPerson(f, e.submitter && e.submitter.name === 'again'); }
+  if (f.id === 'clan-new') {
+    e.preventDefault(); var fd = new FormData(f);
+    var name = (fd.get('name') || '').trim(); if (!name) return formError('the clan needs a name.', 'fld-cname');
+    var c = addClan({ name: name, origin_place: (fd.get('origin_place') || '').trim() || null, notes: (fd.get('notes') || '').trim() || null });
+    var fg = (fd.get('f_given') || '').trim(), sg = (fd.get('s_given') || '').trim(), fsex = fd.get('f_sex') || 'male';
+    if (fg) {
+      var fp = addPerson({ clan_id: c.id, given_name: fg, last_name: (fd.get('f_last') || '').trim() || null, sex: fsex, is_living: false });
+      c.founder_id = fp.id;
+      if (sg) { var sp = addPerson({ clan_id: c.id, given_name: sg, last_name: (fd.get('s_last') || '').trim() || null, sex: fsex === 'male' ? 'female' : 'male', is_living: false }); c.founder_spouse_id = sp.id; addMarriage(fsex === 'male' ? { husband_id: fp.id, wife_id: sp.id } : { husband_id: sp.id, wife_id: fp.id }); }
+    }
+    recomputeClan(c.id); S.currentClan = c.id; save(); toast('Created the ' + clanLabel(c) + '.'); go('#/people');
+  }
+  if (f.id === 'clan-edit') {
+    e.preventDefault(); var fd2 = new FormData(f); var cc = clanById(+f.getAttribute('data-id'));
+    var nm = (fd2.get('name') || '').trim(); if (!nm) return formError('the clan needs a name.', 'fld-cname');
+    cc.name = nm; cc.origin_place = (fd2.get('origin_place') || '').trim() || null; cc.notes = (fd2.get('notes') || '').trim() || null;
+    save(); toast('Saved clan details.'); render();
+  }
+  if (f.id === 'marriage-form') {
+    e.preventDefault();
+    var fd3 = new FormData(f), pid = +f.getAttribute('data-person'), mid = f.getAttribute('data-id') ? +f.getAttribute('data-id') : null;
+    var p = byId(pid), spp = null;
+    if (M.create) {
+      var g = (fd3.get('new_given') || '').trim(), nk = (fd3.get('new_nick') || '').trim();
+      if (!g && !nk) { document.getElementById('fld-mg').classList.add('err'); toast('Type a given name or a nickname for the new spouse.'); return; }
+      spp = addPerson({ clan_id: p.clan_id, given_name: g || nk, nickname: g ? (nk || null) : null, notes: g ? null : 'Known only by this nickname.', last_name: (fd3.get('new_last') || '').trim() || null, sex: fd3.get('new_sex') || 'unknown' });
+    } else if (M.sel) spp = byId(M.sel);
+    if (spp && !mid && spousesOf(p.id).indexOf(spp) >= 0 && !confirm(fullName(p) + ' is already recorded as married to ' + fullName(spp) + '. Add a second marriage record anyway?')) return;
+    var cpl = assignCouple(p, spp);
+    var data = { husband_id: cpl.h ? cpl.h.id : null, wife_id: cpl.w ? cpl.w.id : null, date: fd3.get('date') || null, date_text: (fd3.get('date_text') || '').trim() || null, place: (fd3.get('place') || '').trim() || null, status: fd3.get('status'), notes: (fd3.get('notes') || '').trim() || null };
+    if (mid) Object.assign(mById(mid), data); else addMarriage(data);
+    M = { open: false }; save();
+    toast(spp && spp.clan_id !== p.clan_id ? 'Marriage saved — it links the ' + clanLabel(clanOf(p)) + ' and the ' + clanLabel(clanOf(spp)) + '.' : spp && M.create === undefined ? 'Marriage saved.' : 'Marriage saved.');
+    render();
+  }
+});
+document.addEventListener('input', function (e) {
+  if (e.target.id === 'f-q') { L.q = e.target.value; document.getElementById('list').innerHTML = listHtml(); }
+  if (e.target.closest && e.target.closest('#print-form') && (e.target.type === 'number' || e.target.type === 'text')) drawPrintPreview();
+});
+document.addEventListener('change', function (e) {
+  var id = e.target.id;
+  if (id === 'clan-sel' && e.target.value) { S.currentClan = +e.target.value; save(); var rn = route().name; go(SCOPED[rn] && rn !== 'person' && rn !== 'edit' ? '#/' + (rn === 'new' ? 'new' : rn) : '#/people'); render(); }
+  if (id === 'f-root') { L.root = e.target.value; L.gen = 'all'; render(); }
+  if (id === 'f-gen') { L.gen = e.target.value; document.getElementById('list').innerHTML = listHtml(); }
+  if (id === 'f-show') { L.show = e.target.value; document.getElementById('list').innerHTML = listHtml(); }
+  if (id === 'f-sort') { L.sort = e.target.value; document.getElementById('list').innerHTML = listHtml(); }
+  if (id === 'f-founder') { F.founder = e.target.value ? +e.target.value : null; var sp = F.founder ? spousesOf(F.founder) : []; F.spouse = sp.length ? String(sp[0].id) : ''; F.backedUp = false; render(); document.getElementById('founders').scrollIntoView(); }
+  if (id === 'f-spouse') { F.spouse = e.target.value; render(); document.getElementById('founders').scrollIntoView(); }
+  if (id === 'restore' && e.target.files[0]) { restore(e.target.files[0]); e.target.value = ''; }
+  if (id === 'i-photo' && e.target.files[0]) {
+    readPhoto(e.target.files[0]).then(function (url) { pendingPhoto = url; document.getElementById('photo-prev').innerHTML = '<span class="photo lg"><img src="' + url + '" alt=""></span>'; }).catch(function () { toast('Couldn’t read that image.'); });
+  }
+  if (id === 'i-cp') { document.getElementById('gen-hint').textContent = genHint(byId(+e.target.value), null); }
+  if (e.target.closest && e.target.closest('#print-form')) { readPrintForm(); if (P.format !== P._rendered || id === 'p-preset') render(); else drawPrintPreview(); }
+  if (id === 'm-sp') { document.getElementById('m-new').style.display = e.target.value === 'new' ? '' : 'none'; }
+});
+window.addEventListener('hashchange', function () { PH = { add: null, edit: null }; if (route().name !== 'person') { M = { open: false }; if (K.inline) K = blankK(); } render(); });
+window.addEventListener('resize', function () { if (route().name === 'print') drawPrintPreview(); });
+window.addEventListener('afterprint', function () { document.getElementById('print-root').innerHTML = ''; });
+
+/* ================= start ================= */
+var loaded = load();
+if (!loaded) seed();
+if (!S.photos) S.photos = [];
+function boot() {
+  var inline = S.imgInline || {};
+  if (IDB_OK) Object.keys(inline).forEach(function (k) { if (!IMG[k]) imgPut(+k, inline[k]); }); else IMG = inline;
+  var hadInlinePhotos = RAW_BEFORE && RAW_BEFORE.indexOf('"photo":"data:') >= 0;
+  var moved = migratePhotos();
+  if (RAW_BEFORE && (ORDER_ADDED || moved || hadInlinePhotos || loaded === 'migrated')) downloadText(RAW_BEFORE, 'clan-backup-before-upgrade-' + stamp() + '.json');
+  if (!cur()) S.currentClan = (liveClans()[0] || {}).id || null;
+  save(); render();
+  if (ORDER_ADDED) toast('Sibling order was added to your saved data — birth years were used once to start it. Check each family’s order with the arrows on the person page. A backup of the data as it was before was downloaded first.');
+  else if (loaded === 'migrated') toast('Your earlier demo data was moved into a clan called “My clan”. Rename it in Clan settings. A backup of the old data was downloaded first.');
+  else if (moved) toast(moved + ' portrait' + (moved === 1 ? '' : 's') + ' moved into the new photo store (backup of the old data downloaded first).');
+  if (memoryOnly) toast('This browser blocks saving — changes will be lost on reload. Use Download backup.');
+}
+idbOpen().then(function (db) { IDB = db; IDB_OK = true; return idbAll(db); }).then(function (m) { IMG = m; }).catch(function () { IDB_OK = false; IMG = {}; }).then(boot);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+/* Clan Family Tree design system — tokens + component styles. Import once at app entry. */
+/* Fonts: self-host with @fontsource/source-serif-4 and @fontsource/source-sans-3 (the app runs offline). */
+
+/* Clan Family Tree tokens — compiled from tokens.json */
+:root, [data-theme="paper"] {
+  --paper: #f6f1e6;
+  --paper-raised: #fcf9f2;
+  --paper-sunk: #ede6d6;
+  --rule: #d8cdb8;
+  --rule-strong: #8c7f69;
+  --ink: #241e17;
+  --ink-muted: #5e5446;
+  --lineage: #2e5236;
+  --lineage-soft: #e2ebdf;
+  --on-lineage: #ffffff;
+  --gilt: #7d5f14;
+  --gilt-soft: #f1e6c8;
+  --spouse: #5a6570;
+  --living: #245a78;
+  --living-soft: #dfeaf0;
+  --warn: #8a5300;
+  --warn-soft: #f6e5c6;
+  --danger: #a02a1c;
+  --danger-soft: #f7dfd9;
+  --focus: #245a78;
+  --on-danger: var(--on-lineage);
+  --link-hidden: var(--rule-strong);
+  --shadow-sm: 0 1px 2px #241e1714;
+  --shadow-lg: 0 6px 20px -4px #241e172e;
+  --focus-ring: 0 0 0 2px #f6f1e6, 0 0 0 4px #245a78;
+}
+[data-theme="lamplight"] {
+  --paper: #1c1a17;
+  --paper-raised: #25221e;
+  --paper-sunk: #151310;
+  --rule: #3b362f;
+  --rule-strong: #857a67;
+  --ink: #eee6d8;
+  --ink-muted: #b0a590;
+  --lineage: #93c49c;
+  --lineage-soft: #1f3024;
+  --on-lineage: #1c1a17;
+  --gilt: #d8b565;
+  --gilt-soft: #352b14;
+  --spouse: #a2afbb;
+  --living: #8cc4e0;
+  --living-soft: #17303d;
+  --warn: #e8b25a;
+  --warn-soft: #3a2a0c;
+  --danger: #f19684;
+  --danger-soft: #3f1a14;
+  --focus: #8cc4e0;
+  --shadow-sm: 0 1px 2px #00000080;
+  --shadow-lg: 0 8px 24px -4px #000000b3;
+  --focus-ring: 0 0 0 2px #1c1a17, 0 0 0 4px #8cc4e0;
+  --on-danger: var(--on-lineage);
+  --link-hidden: var(--rule-strong);
+}
+[data-theme="print"] {
+  --paper: #ffffff;
+  --paper-raised: #ffffff;
+  --paper-sunk: #f2f2f2;
+  --rule: #bdbdbd;
+  --rule-strong: #555555;
+  --ink: #000000;
+  --ink-muted: #333333;
+  --lineage: #1f3d26;
+  --lineage-soft: #ffffff;
+  --on-lineage: #ffffff;
+  --gilt: #5c4508;
+  --gilt-soft: #ffffff;
+  --spouse: #444444;
+  --living: #1d4a63;
+  --living-soft: #ffffff;
+  --warn: #6b4000;
+  --warn-soft: #ffffff;
+  --danger: #8a1f13;
+  --danger-soft: #ffffff;
+  --focus: #000000;
+  --shadow-sm: none;
+  --shadow-lg: none;
+  --focus-ring: none;
+  --on-danger: var(--on-lineage);
+  --link-hidden: var(--rule-strong);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --radius-0: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --node-width: 176px;
+  --node-gap: 24px;
+  --generation-gap: 72px;
+  --print-node-min: 45mm;
+  --link-width: 1.5px;
+  --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3", "Source Sans Pro", "Segoe UI", system-ui, sans-serif;
+}
+
+
+body { margin: 0; font-family: var(--font-sans); font-size: 15px; line-height: 22px; background: var(--paper); color: var(--ink); }
+.cl-stage { padding: var(--space-4); display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-start; }
+.cl-stack { padding: var(--space-4); display: grid; gap: var(--space-4); max-width: 560px; }
+.cl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Button */
+.cl-btn { font: 600 15px/20px var(--font-sans); height: 36px; padding: 0 var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--rule-strong); background: var(--paper-raised); color: var(--ink); cursor: pointer; }
+.cl-btn:hover { background: var(--paper-sunk); }
+.cl-btn-primary { background: var(--lineage); border-color: var(--lineage); color: var(--on-lineage); }
+.cl-btn-primary:hover { background: var(--lineage); filter: brightness(1.08); }
+.cl-btn-danger { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
+.cl-btn-danger:hover { background: var(--danger); filter: brightness(1.08); }
+.cl-btn-link { border-color: transparent; background: transparent; color: var(--lineage); padding: 0 var(--space-2); text-decoration: underline; text-underline-offset: 3px; }
+.cl-btn:disabled { opacity: .5; cursor: not-allowed; }
+.cl-btn:focus-visible, .cl-input:focus-visible, .cl-node:focus-visible, .cl-row:focus-visible { outline: 2px solid transparent; box-shadow: var(--focus-ring); }
+
+/* Field */
+.cl-field { display: grid; gap: var(--space-1); min-width: 0; border: 0; padding: 0; margin: 0; }
+.cl-label { font: 600 13px/18px var(--font-sans); color: var(--ink); padding: 0; }
+.cl-req { font-weight: 400; color: var(--ink-muted); margin-left: var(--space-2); }
+.cl-sub { font: 400 13px/18px var(--font-sans); color: var(--ink-muted); }
+.cl-input { font: 400 15px/22px var(--font-sans); color: var(--ink); background: var(--paper-raised); border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); padding: 6px var(--space-3); min-width: 0; width: 100%; box-sizing: border-box; }
+textarea.cl-input { min-height: 88px; resize: vertical; }
+.cl-input::placeholder { color: var(--ink-muted); }
+.cl-field-clan .cl-label { color: var(--lineage); }
+.cl-field-clan .cl-input { border-color: var(--lineage); border-width: 2px; padding: 5px 11px; }
+.cl-field-error .cl-input { border-color: var(--danger); border-width: 2px; padding: 5px 11px; }
+.cl-hint { font: 400 13px/18px var(--font-sans); color: var(--ink-muted); }
+.cl-hint-error { color: var(--danger); }
+.cl-hint-error::before { content: "Can’t save — "; font-weight: 600; }
+
+/* DateField */
+.cl-date-row { display: grid; grid-template-columns: 11rem 1fr; gap: var(--space-3); }
+.cl-date-part { display: grid; gap: var(--space-1); }
+.cl-datefield > .cl-date-part { margin-top: var(--space-2); }
+
+/* Badge */
+.cl-badge { display: inline-block; font: 600 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; padding: 2px var(--space-2); border-radius: var(--radius-sm); background: var(--paper-sunk); color: var(--ink-muted); white-space: nowrap; }
+.cl-badge-lineage { background: var(--lineage-soft); color: var(--lineage); }
+.cl-badge-gilt { background: var(--gilt-soft); color: var(--gilt); }
+.cl-badge-living { background: var(--living-soft); color: var(--living); }
+.cl-badge-warn { background: var(--warn-soft); color: var(--warn); }
+.cl-badge-danger { background: var(--danger-soft); color: var(--danger); }
+[data-theme="print"] .cl-badge { border: 1px solid currentColor; }
+
+/* PersonNode */
+.cl-node { font: inherit; text-align: left; display: flex; gap: var(--space-3); align-items: flex-start; width: var(--node-width); box-sizing: border-box; padding: var(--space-3); background: var(--paper-raised); color: var(--ink); border: 1px solid var(--rule-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+button.cl-node { cursor: pointer; }
+button.cl-node:hover { background: var(--paper-sunk); }
+.cl-node-clan { border: 2px solid var(--lineage); padding: 11px; }
+.cl-node-spouse { border-style: solid; }
+.cl-node-founder { background: var(--gilt-soft); }
+.cl-node-selected { background: var(--lineage-soft); }
+.cl-photo { flex: none; width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--paper-sunk); color: var(--ink-muted); display: grid; place-items: center; font: 600 13px/1 var(--font-serif); overflow: hidden; }
+.cl-photo img { width: 100%; height: 100%; object-fit: cover; }
+.cl-node-text { display: grid; gap: 2px; min-width: 0; justify-items: start; }
+.cl-gen { font: 600 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--gilt); }
+.cl-node-name { font: 600 17px/22px var(--font-serif); overflow-wrap: anywhere; }
+.cl-nick { font-weight: 400; font-style: italic; }
+.cl-node-dates { font: 400 13px/18px var(--font-sans); color: var(--ink-muted); }
+.cl-node-dense { padding: var(--space-2); gap: var(--space-2); }
+.cl-node-clan.cl-node-dense { padding: 7px; }
+.cl-node-dense .cl-node-name { font-size: 14px; line-height: 18px; }
+.cl-node-dense .cl-photo { width: 28px; height: 28px; }
+
+/* CoupleNode */
+.cl-couple { display: inline-flex; align-items: stretch; }
+.cl-couple > .cl-node:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.cl-couple > .cl-node:last-child { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.cl-couple-single > .cl-node { border-radius: var(--radius-md); }
+.cl-join { display: grid; place-content: center; justify-items: center; padding: 0 var(--space-2); border-top: var(--link-width) solid var(--spouse); border-bottom: var(--link-width) solid var(--spouse); color: var(--spouse); font: 600 17px/1 var(--font-serif); background: var(--paper); }
+.cl-join-date { font: 400 11px/14px var(--font-sans); color: var(--spouse); margin-top: 2px; white-space: nowrap; }
+
+/* PersonRow */
+.cl-row { font: inherit; color: var(--ink); width: 100%; display: grid; grid-template-columns: 2.5rem 1fr auto auto; gap: var(--space-3); align-items: center; text-align: left; padding: var(--space-2) var(--space-3); background: transparent; border: 0; border-bottom: 1px solid var(--rule); cursor: pointer; }
+.cl-row:hover { background: var(--paper-sunk); }
+.cl-row-selected { background: var(--lineage-soft); }
+.cl-row-gen { font: 600 13px/18px var(--font-serif); color: var(--gilt); text-align: right; font-variant-numeric: tabular-nums; }
+.cl-row-main { display: grid; min-width: 0; }
+.cl-row-name { font: 600 17px/22px var(--font-serif); }
+.cl-row-parent, .cl-row-dates { font: 400 13px/18px var(--font-sans); color: var(--ink-muted); }
+.cl-row-dates { font-variant-numeric: tabular-nums; }
+.cl-row-flags { display: flex; gap: var(--space-1); }
+
+@media print {
+  .cl-node, .cl-couple { break-inside: avoid; }
+  .cl-node { box-shadow: none; }
+}
