@@ -4,11 +4,11 @@ import { Button } from '../../design-system';
 import { GroupedOptions } from '../../Components/ui';
 import TreeChart, { layoutTree } from '../../Components/TreeChart';
 import OutlineView, { outlineCounts } from '../../Components/OutlineView';
-import { caption, tokens } from '../../lib/format';
+import { caption, chartGen, cousinBasis, cousinDegree, ordinal, tokens } from '../../lib/format';
 import { handOff, readPref, writePref } from '../../lib/prefs';
 
 const DEPTHS = [2, 3, 4, 5, 6, 7, 8, 10];
-const DEFAULTS = { view: 'tree', depth: 3, numbering: 'clan', dates: true, photos: false };
+const DEFAULTS = { view: 'tree', depth: 3, numbering: 'clan', dates: true, photos: false, cousins: false, lastNames: true };
 
 function findOption(groups, id) {
     for (const g of groups) for (const o of g.options) if (o.id === id) return o;
@@ -28,7 +28,7 @@ export default function TreeIndex({ clan, startOptions, defaultStart, requestedS
         if (DEPTHS.includes(+url.get('depth'))) p.depth = +url.get('depth');
         return p;
     });
-    const { view, depth, numbering, dates, photos } = prefs;
+    const { view, depth, numbering, dates, photos, cousins, lastNames } = prefs;
     const setPref = (k, v) => setPrefs((p) => ({ ...p, [k]: v }));
     useEffect(() => writePref('tree', prefs), [prefs]);
 
@@ -122,14 +122,17 @@ export default function TreeIndex({ clan, startOptions, defaultStart, requestedS
     const zoomBy = (dz) => setZoom((z) => Math.max(0.2, Math.min(2, Math.round(((z || 1) + dz * 0.1) * 10) / 10)));
 
     const printThis = () => {
-        handOff('print', { start, gens: depth, dates, photos, format: view, numbering, collapsed: [...collapsed] });
+        handOff('print', { start, gens: depth, dates, photos, cousins, lastNames, format: view, numbering, collapsed: [...collapsed] });
         router.visit('/print');
     };
 
     const st = data?.start;
     const toks = tokens(q);
     const counts = data && view === 'outline' ? outlineCounts(data, collapsed, toks) : null;
-    const opts = { dates, photos, selected, relative };
+    const opts = { dates, photos, selected, relative, cousins, lastNames };
+    // The deepest tag follows "Generations shown" and the numbering: the bottom row's Gen.
+    const bottom = data ? cousinDegree(chartGen(data.rootPerson.generation, depth - 1, relative), relative) : null;
+    const deepest = bottom ? ordinal(bottom) : null;
 
     return (
         <>
@@ -154,6 +157,14 @@ export default function TreeIndex({ clan, startOptions, defaultStart, requestedS
                     </nav>
                     <h1 className="display">{st ? (st.is_founder ? `The ${clan.label}` : `Descendants of ${st.name}`) : ' '}</h1>
                     <div className="caption">{st ? caption({ clan, start: st, relative, withDate: false }) : ''}</div>
+                    {cousins && st && (
+                        <div className="small muted">
+                            {cousinBasis(clan, st, relative).replace(/^c/, 'C')}
+                            {relative ? ' (Gen 0): Gen 2 are 1st cousins' : ' (Gen 1): Gen 3 are 1st cousins'}, the next generation 2nd cousins, and so on — across different
+                            branches.{' '}
+                            {deepest ? `${depth} generations shown reach down to ${deepest} cousins.` : 'Show more generations to reach the cousins.'}
+                        </div>
+                    )}
                 </div>
                 <div className="seg" role="group" aria-label="View">
                     {['tree', 'outline'].map((v) => (
@@ -209,6 +220,14 @@ export default function TreeIndex({ clan, startOptions, defaultStart, requestedS
                 <label className="check" style={{ alignSelf: 'center' }}>
                     <input type="checkbox" checked={photos} onChange={(e) => setPref('photos', e.target.checked)} />
                     Photos
+                </label>
+                <label className="check" style={{ alignSelf: 'center' }}>
+                    <input type="checkbox" checked={lastNames} onChange={(e) => setPref('lastNames', e.target.checked)} />
+                    Last names
+                </label>
+                <label className="check" style={{ alignSelf: 'center' }}>
+                    <input type="checkbox" checked={cousins} onChange={(e) => setPref('cousins', e.target.checked)} />
+                    Cousin tags
                 </label>
                 {collapsed.size > 0 && (
                     <Button

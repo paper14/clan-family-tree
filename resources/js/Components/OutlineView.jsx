@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Badge } from '../design-system';
-import { chartGen, highlightRuns, matchesAll } from '../lib/format';
+import { chartGen, chartName, cousinTag, highlightRuns, matchesAll } from '../lib/format';
 
 function Hl({ text, toks }) {
     return highlightRuns(text, toks).map((r, i) => (r.hit ? <mark key={i}>{r.text}</mark> : <span key={i}>{r.text}</span>));
@@ -33,6 +33,7 @@ export default function OutlineView({ data, collapsed, opts, toks, onToggle }) {
     return lines(data.root, collapsed).map((n) => {
         const p = people[n.id];
         const g = chartGen(data.rootPerson.generation, n.d, opts.relative);
+        const tag = opts.cousins ? cousinTag(g, opts.relative) : null;
         const toggle = n.nKids ? (
             n.cut ? (
                 <span className="otg cut" title="Deeper than the generations shown" aria-hidden="true">
@@ -54,7 +55,7 @@ export default function OutlineView({ data, collapsed, opts, toks, onToggle }) {
                 {opts.photos && (p.portrait ? <img className="othumb" src={p.portrait} alt="" /> : <span className="othumb" aria-hidden="true" />)}
                 <span style={{ flexGrow: 1, minWidth: 0 }}>
                     <Link className="onm" href={`/people/${p.id}`}>
-                        <Hl text={p.name} toks={toks} />
+                        <Hl text={chartName(p, opts)} toks={toks} />
                         {p.nickname && (
                             <span className="nick">
                                 {' “'}
@@ -70,6 +71,7 @@ export default function OutlineView({ data, collapsed, opts, toks, onToggle }) {
                             </span>
                         </>
                     )}
+                    {tag && <span className="ocz"> · {tag}</span>}
                     {opts.dates && p.span && <span className="odt"> {p.span}</span>}
                     {p.is_living && (
                         <>
@@ -86,7 +88,7 @@ export default function OutlineView({ data, collapsed, opts, toks, onToggle }) {
                                     <span key={s.id}>
                                         {i > 0 && ', '}
                                         <Link href={`/people/${sp.id}`}>
-                                            <Hl text={sp.name + (sp.nickname ? ` “${sp.nickname}”` : '')} toks={toks} />
+                                            <Hl text={chartName(sp, opts) + (sp.nickname ? ` “${sp.nickname}”` : '')} toks={toks} />
                                         </Link>
                                         {sp.clan_id !== p.clan_id && <span className="small muted"> ({sp.clan_label})</span>}
                                     </span>
@@ -102,7 +104,7 @@ export default function OutlineView({ data, collapsed, opts, toks, onToggle }) {
                                 <Badge tone="lineage">{p.subclan_name || 'Subclan'}</Badge>
                             </span>
                         )}
-                        {p.name} — {n.total}
+                        {chartName(p, opts)} — {n.total}
                         {n.cut ? ' more below' : ' in this chart'}
                     </span>
                 )}

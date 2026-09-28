@@ -10,6 +10,7 @@ use App\Models\Clan;
 use App\Models\Marriage;
 use App\Models\Person;
 use App\Models\Photo;
+use App\Services\Cousins;
 use App\Services\Descendants;
 use App\Services\Family;
 use App\Services\Membership;
@@ -135,7 +136,7 @@ class PersonController extends Controller
     }
 
     /** Person detail (screen 6). DESCENT: parents, spouses and children are never clan-scoped. */
-    public function show(Person $person): Response
+    public function show(Request $request, Person $person): Response
     {
         $clan = $this->people->clan($person->clan_id);
         if ($clan && ! $clan->trashed() && $clan->id !== $this->currentClan()?->id) {
@@ -241,6 +242,9 @@ class PersonController extends Controller
             'childCount' => array_sum(array_map(fn ($g) => count($g['kids']), $groups)),
             'photoPanels' => $this->photoPanels($p, $marriages),
             'inline' => $this->inlineChildrenProps($p),
+            // Only when the Cousins card is opened (a partial reload): finding them walks several generations.
+            'cousins' => Inertia::optional(fn () => $this->cousinProps($p, app(Cousins::class), $request->integer('through') ?: null)),
+            'cousinAncestors' => Inertia::optional(fn () => $this->cousinAncestorOptions($p, app(Cousins::class))),
         ]);
     }
 
@@ -280,6 +284,58 @@ class PersonController extends Controller
         }
 
         return back();
+    }
+
+    /** "1st cousins", in groups headed "Grandparents Teodoro Santos and Amparo Diaz · mother’s side". */
+    private function cousinProps(Person $p, Cousins $cousins, ?int $throughId = null): array
+    {
+        return array_map(fn ($d) => [
+            'degree' => $d['degree'],
+            'label' => Format::ordinal($d['degree']).' cousins',
+            'count' => array_sum(array_map(fn ($g) => $g['cousins']->count(), $d['groups'])),
+            'groups' => array_map(fn ($g) => [
+                'key' => $g['via']->pluck('id')->implode('-'),
+                'label' => $this->ancestorsLabel($g['via'], $d['degree'] + 1).' · '.$g['side'].'’s side',
+                'cousins' => $g['cousins']->map(fn (Person $c) => $this->people->card($c, $p->clan_id))->all(),
+            ], $d['groups']),
+        ], $cousins->of($p, $throughId));
+    }
+
+    /** The "Through ancestor" picker: "Great-grandfather · Juan Santos · mother’s side". */
+    private function cousinAncestorOptions(Person $p, Cousins $cousins): array
+    {
+        return array_map(fn ($a) => [
+            'id' => $a['person']->id,
+            'name' => $a['person']->fullName(),
+            'label' => ucfirst($this->ancestorTerm($a['up'], $a['person'])).' · '.$a['person']->fullName().' · '.$a['side'].'’s side',
+        ], $cousins->ancestorsOf($p));
+    }
+
+    /** "grandparents" (a couple), or "great-grandfather" / "…mother" / "…parent" for one person. */
+    private function ancestorTerm(int $up, ?Person $one): string
+    {
+        $term = match ($up) {
+            2 => 'grand',
+            3 => 'great-grand',
+            4 => 'great-great-grand',
+            default => ($up - 2).'× great-grand',
+        };
+
+        return $term.(! $one ? 'parents' : match ($one->sex->value) {
+            'male' => 'father',
+            'female' => 'mother',
+            default => 'parent',
+        });
+    }
+
+    /** "Grandparents A and B", "Great-grandfather A", "3× great-grandparents A and B". */
+    private function ancestorsLabel($via, int $up): string
+    {
+        $term = $this->ancestorTerm($up, $via->count() > 1 ? null : $via->first());
+        $names = $via->map->fullName()->all();
+        $last = array_pop($names);
+
+        return ucfirst($term).' '.($names ? implode(', ', $names).' and ' : '').$last;
     }
 
     private function placedSuffix(Person $p): string

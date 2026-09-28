@@ -17,6 +17,41 @@ export function chartGen(rootGeneration, depth, relative) {
     return rootGeneration == null ? null : rootGeneration + depth;
 }
 
+/** 1st, 2nd, 3rd, 4th … 11th, 12th, 13th … 21st. */
+export function ordinal(n) {
+    const suffix = [11, 12, 13].includes(n % 100) ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
+    return `${n}${suffix}`;
+}
+
+/**
+ * Cousin degree for a chart generation, counted from whoever the numbering counts from:
+ *  - clan numbering: the founding couple is Gen 1, so Gen 3 (their grandchildren) are
+ *    1st cousins, Gen 4 2nd cousins …
+ *  - relative numbering: the start person is Gen 0, so Gen 2 are 1st cousins, Gen 3 2nd …
+ * Takes the same Gen the box shows (chartGen), so tag and number can never disagree.
+ */
+export function cousinDegree(gen, relative) {
+    if (gen == null) return null;
+    const n = gen - (relative ? 1 : 2);
+    return n >= 1 ? n : null;
+}
+
+/** What the tags count from, for captions: follows the numbering choice. */
+export function cousinBasis(clan, start, relative) {
+    return `cousin tags count from ${relative ? start.name : `the founding couple ${clan.foundersText}`}`;
+}
+
+/** "1st cousin", or null for the generations above the first cousins. */
+export function cousinTag(gen, relative) {
+    const n = cousinDegree(gen, relative);
+    return n ? `${ordinal(n)} cousin` : null;
+}
+
+/** The name as the chart shows it: full, or without the last name when that option is off. */
+export function chartName(p, opts) {
+    return opts.lastNames === false ? p.short_name || p.name : p.name;
+}
+
 /**
  * Every chart and printout captions its own numbering (planning.md §4.1):
  *   "Santos clan · Gen 1 = founding couple Isko and Sela · printed 27 September 2026"

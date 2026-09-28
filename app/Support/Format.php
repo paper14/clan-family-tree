@@ -47,6 +47,12 @@ class Format
         return implode(' ', array_filter([$p->given_name, $p->middle_name, $p->last_name, $p->suffix], fn ($v) => $v !== null && $v !== ''));
     }
 
+    /** The name without the last name, for charts with last names turned off: "Liza", "Andres Jr.". */
+    public static function nameWithoutLast(Person $p): string
+    {
+        return implode(' ', array_filter([$p->given_name, $p->middle_name, $p->suffix], fn ($v) => $v !== null && $v !== ''));
+    }
+
     /** One event as the record says it: the text, else the formatted exact date. */
     public static function event(Person $p, string $k): string
     {
@@ -98,5 +104,13 @@ class Format
     public static function marriageWhen(?string $text, ?string $date): string
     {
         return $text ?: self::date($date);
+    }
+
+    /** 1st, 2nd, 3rd, 4th … 11th, 12th, 13th … 21st. */
+    public static function ordinal(int $n): string
+    {
+        $suffix = in_array($n % 100, [11, 12, 13], true) ? 'th' : (['th', 'st', 'nd', 'rd'][$n % 10] ?? 'th');
+
+        return $n.$suffix;
     }
 }

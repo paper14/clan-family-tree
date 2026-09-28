@@ -248,6 +248,7 @@ class Descendants
             $out[$id] = [
                 'id' => $id,
                 'name' => $p->fullName(),
+                'short_name' => Format::nameWithoutLast($p),
                 'nickname' => $p->nickname,
                 'span' => Format::span($p),
                 'initials' => Format::initials($p),

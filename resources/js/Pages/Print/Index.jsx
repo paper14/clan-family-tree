@@ -10,7 +10,7 @@ function findOption(groups, id) {
     return null;
 }
 
-const DEFAULTS = { format: 'tree', numbering: 'clan', gens: 3, preset: 'tarp', w: 2438, h: 1219, fit: true, dates: true, photos: false, headPhoto: true, redact: true, hidden: false, collapsed: [] };
+const DEFAULTS = { format: 'tree', numbering: 'clan', gens: 3, preset: 'tarp', w: 2438, h: 1219, fit: true, dates: true, photos: false, cousins: false, lastNames: true, headPhoto: true, redact: true, hidden: false, collapsed: [] };
 
 /** Print (screen 10): options on the left, a live preview on the right. */
 export default function PrintIndex({ clan, startOptions, defaultStart }) {
@@ -19,7 +19,7 @@ export default function PrintIndex({ clan, startOptions, defaultStart }) {
         const fromTree = takeHandOff('print');
         const P0 = { ...DEFAULTS, start: defaultStart };
         if (fromTree && findOption(startOptions, fromTree.start)) {
-            // "Print this view" carries over start, depth, numbering, dates, photos, collapsed and format.
+            // "Print this view" carries over start, depth, numbering, dates, photos, cousin tags, last names, collapsed and format.
             return { ...P0, ...fromTree, collapsed: fromTree.collapsed || [] };
         }
         const requested = +url.get('start');
@@ -226,6 +226,20 @@ export default function PrintIndex({ clan, startOptions, defaultStart }) {
                         <label className="check">
                             <input type="checkbox" checked={P.dates} onChange={(e) => set('dates', e.target.checked)} />
                             Show dates
+                        </label>
+                        <label className="check">
+                            <input type="checkbox" checked={P.lastNames} onChange={(e) => set('lastNames', e.target.checked)} />
+                            Show last names
+                        </label>
+                        <label className="check">
+                            <input type="checkbox" checked={P.cousins} onChange={(e) => set('cousins', e.target.checked)} />
+                            <span>
+                                Show cousin tags
+                                <br />
+                                <span className="small muted">
+                                    Follows the numbering: {P.numbering === 'relative' ? 'from the starting person, Gen 2 are 1st cousins' : 'from the founding couple, Gen 3 are 1st cousins'}, the next generation 2nd cousins, and so on.
+                                </span>
+                            </span>
                         </label>
                         <label className="check">
                             <input type="checkbox" checked={P.photos} onChange={(e) => set('photos', e.target.checked)} />

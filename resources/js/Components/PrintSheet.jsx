@@ -1,5 +1,5 @@
 import TreeChart, { layoutTree, NODE_W } from './TreeChart';
-import { caption, chartGen, sheetTitle } from '../lib/format';
+import { caption, chartGen, chartName, cousinBasis, cousinTag, sheetTitle } from '../lib/format';
 
 export const PX_PER_MM = 96 / 25.4;
 export const MARGIN_MM = 10;
@@ -26,6 +26,7 @@ export function printCaption(data, P) {
     return (
         caption({ clan: data.clan, start: data.start, relative: P.numbering === 'relative' }) +
         (P.redact ? ' · living people: name only' : '') +
+        (P.cousins ? ` · ${cousinBasis(data.clan, data.start, P.numbering === 'relative')}` : '') +
         (P.hidden ? ' · ARCHIVE COPY, includes hidden links' : '')
     );
 }
@@ -64,7 +65,7 @@ export function ChartSheet({ data, P, m }) {
                 <div style={{ font: 'italic 13px/18px var(--font-sans)', color: 'var(--ink-muted)', marginTop: 4 }}>{printCaption(data, P)}</div>
             </div>
             <div style={{ position: 'absolute', left: m.pad + (m.chartW - 2 * m.pad - m.layout.w) / 2, top: m.titleH + m.pad }}>
-                <TreeChart data={data} layout={m.layout} opts={{ print: true, dates: P.dates, photos: P.photos, redact: P.redact, hidden: P.hidden, relative }} />
+                <TreeChart data={data} layout={m.layout} opts={{ print: true, dates: P.dates, photos: P.photos, redact: P.redact, hidden: P.hidden, relative, cousins: P.cousins, lastNames: P.lastNames }} />
             </div>
         </div>
     );
@@ -81,6 +82,7 @@ export function OutlineSheet({ data, P }) {
     })(data.root);
     const people = data.people;
     const dt = (p) => (!P.dates || (P.redact && p.is_living) ? '' : p.span);
+    const name = (p) => chartName(p, P);
 
     return (
         <div className="outline-print">
@@ -96,6 +98,7 @@ export function OutlineSheet({ data, P }) {
                 const p = people[l.id];
                 const g = chartGen(data.rootPerson.generation, l.d, relative);
                 const more = (l.collapsed || l.cut) && l.total ? ` [${l.total} more below, printed separately]` : '';
+                const tag = P.cousins ? cousinTag(g, relative) : null;
                 const fam = P.photos ? data.familyPhotos?.[l.id] || [] : [];
                 return (
                     <div key={l.id}>
@@ -103,15 +106,16 @@ export function OutlineSheet({ data, P }) {
                             <span className="gn">{g == null ? '' : g}</span>
                             <span>
                                 {l.d > 0 ? `${p.sibling_order}. ` : ''}
-                                <b>{p.name}</b>
+                                <b>{name(p)}</b>
                                 {p.nickname ? ` “${p.nickname}”` : ''}
                                 {p.clan_id !== data.rootPerson.clan_id ? ` (${p.clan_label})` : ''}
+                                {tag && <span className="dd"> · {tag}</span>}
                                 {dt(p) && <span className="dd"> {dt(p)}</span>}
                                 {l.spouses.length > 0 &&
                                     ` = ${l.spouses
                                         .map((s) => {
                                             const sp = people[s.id];
-                                            return sp.name + (sp.nickname ? ` “${sp.nickname}”` : '') + (sp.clan_id !== p.clan_id ? ` (${sp.clan_label})` : '');
+                                            return name(sp) + (sp.nickname ? ` “${sp.nickname}”` : '') + (sp.clan_id !== p.clan_id ? ` (${sp.clan_label})` : '');
                                         })
                                         .join(', ')}`}
                                 {P.hidden && p.hidden_link && <i> (hidden link: {p.hidden_link})</i>}
@@ -149,7 +153,8 @@ export function printParams(P) {
 export function sheetUrl(P) {
     const q = printParams(P);
     for (const k of ['format', 'numbering', 'w', 'h']) q.set(k, P[k]);
-    for (const k of ['fit', 'dates', 'photos', 'redact']) q.set(k, P[k] ? 1 : 0);
+    for (const k of ['fit', 'dates', 'photos', 'redact', 'cousins']) q.set(k, P[k] ? 1 : 0);
+    q.set('lastnames', P.lastNames === false ? 0 : 1);
     q.set('headphoto', P.headPhoto ? 1 : 0);
     q.set('auto', 1);
     return `/print/sheet?${q}`;

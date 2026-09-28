@@ -16,6 +16,8 @@ function readOptions(o) {
         photos: on('photos', false),
         headPhoto: on('headphoto', true),
         redact: on('redact', true),
+        cousins: on('cousins', false),
+        lastNames: on('lastnames', true),
         hidden: on('hidden', false),
         auto: on('auto', false),
     };

@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Badge, Button } from '../../design-system';
 import { Arrow, ErrorNote, NameNick, PersonCard, Photo } from '../../Components/ui';
 import PhotoPanel from '../../Components/PhotoPanel';
@@ -70,8 +70,123 @@ function InlineChildren({ inline, onClose }) {
     );
 }
 
+/**
+ * 1st, 2nd, 3rd … cousins, through both parents and across clans. One fold per degree
+ * (the 1st open), grouped under the ancestors they share. "Through ancestor" narrows the
+ * list to one ancestor's descendants in this person's generation (?through= in the address).
+ */
+function CousinList({ cousins, ancestors }) {
+    const [through, setThrough] = useState(() => new URLSearchParams(window.location.search).get('through') || '');
+    const [busy, setBusy] = useState(false);
+    const total = cousins.reduce((n, d) => n + d.count, 0);
+    const chosen = ancestors.find((a) => String(a.id) === through);
+
+    const pick = (v) => {
+        setThrough(v);
+        router.reload({
+            only: ['cousins'],
+            data: { through: v },
+            preserveScroll: true,
+            onStart: () => setBusy(true),
+            onFinish: () => setBusy(false),
+        });
+    };
+
+    return (
+        <>
+            <div className="row" style={{ alignItems: 'flex-end' }}>
+                <span className="small muted" style={{ flexGrow: 1 }}>
+                    {total} {total === 1 ? 'cousin' : 'cousins'}
+                    {chosen ? ` through ${chosen.name}` : ''}
+                </span>
+                {ancestors.length > 0 && (
+                    <div className="cl-field" style={{ width: 420, maxWidth: '100%' }}>
+                        <label className="cl-label" htmlFor="c-through">
+                            Through ancestor
+                        </label>
+                        <select className="cl-input" id="c-through" value={chosen ? through : ''} onChange={(e) => pick(e.target.value)}>
+                            <option value="">All ancestors</option>
+                            {ancestors.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                    {a.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+            </div>
+            {chosen && (
+                <p className="small muted" style={{ margin: 0 }} aria-live="polite">
+                    {busy ? 'Finding cousins…' : `Everyone in this generation who descends from ${chosen.name}, each at their closest degree.`}
+                </p>
+            )}
+            {cousins.length ? (
+                cousins.map((d, i) => (
+                    <details key={d.degree} className="fold" open={i === 0}>
+                        <summary>
+                            {d.label} · {d.count}
+                        </summary>
+                        {d.groups.map((g) => (
+                            <div key={g.key} className="stack" style={{ gap: 8, marginTop: 8 }}>
+                                <span className="small muted">{g.label}</span>
+                                <div className="grid3">
+                                    {g.cousins.map((c) => (
+                                        <PersonCard key={c.id} person={c} clanLine={!c.other_clan && c.generation != null} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </details>
+                ))
+            ) : (
+                <p className="small muted" style={{ margin: 0 }}>
+                    None recorded.
+                </p>
+            )}
+            <p className="small muted" style={{ margin: 0 }}>
+                Same-generation cousins through both parents, in every clan. Each is listed once, at the closest degree.
+            </p>
+        </>
+    );
+}
+
+/**
+ * The Cousins card: closed until asked for, and only then are cousins worked out (they're
+ * optional props, fetched with a partial reload). Opens by itself for a ?through= address.
+ */
+function CousinsCard({ cousins, ancestors }) {
+    const [open, setOpen] = useState(() => new URLSearchParams(window.location.search).has('through'));
+    const loaded = cousins !== undefined && ancestors !== undefined;
+
+    useEffect(() => {
+        if (open && !loaded) router.reload({ only: ['cousins', 'cousinAncestors'], preserveScroll: true });
+    }, [open, loaded]);
+
+    return (
+        <section className="card" style={{ marginTop: 24 }} aria-label="Cousins">
+            <div className="row">
+                <h2 style={{ flexGrow: 1 }}>Cousins</h2>
+                <Button className="cl-btn-sm" aria-expanded={open} aria-controls="cousins-body" onClick={() => setOpen(!open)}>
+                    {open ? 'Hide cousins' : 'Show cousins'}
+                </Button>
+            </div>
+            {open && (
+                <div id="cousins-body" className="stack">
+                    {loaded ? (
+                        <CousinList cousins={cousins} ancestors={ancestors} />
+                    ) : (
+                        <p className="small muted" style={{ margin: 0 }} aria-live="polite">
+                            Finding cousins…
+                        </p>
+                    )}
+                </div>
+            )}
+        </section>
+    );
+}
+
 /** Person detail (screen 6). Descent is never clan-scoped: every child shows, whatever their clan. */
-export default function PersonShow({ person: p, clan, line, facts, clanParent, otherParent, marriages, childGroups, childCount, photoPanels, inline }) {
+export default function PersonShow({ person: p, clan, line, facts, clanParent, otherParent, marriages, childGroups, childCount, photoPanels, inline, cousins, cousinAncestors }) {
     const { errors } = usePage().props;
     const [mOpen, setMOpen] = useState(null); // null | 'new' | marriage id
     const [kidsOpen, setKidsOpen] = useState(false);
@@ -339,6 +454,9 @@ export default function PersonShow({ person: p, clan, line, facts, clanParent, o
             </div>
 
             {kidsOpen && <InlineChildren inline={inline} onClose={() => setKidsOpen(false)} />}
+
+            {/* keyed by person: opening a cousin's page starts closed, from "All ancestors" */}
+            <CousinsCard key={p.id} cousins={cousins} ancestors={cousinAncestors} />
 
             <section className="card" style={{ marginTop: 24 }} aria-label="Photos">
                 <h2>Photos</h2>

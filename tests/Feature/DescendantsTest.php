@@ -187,4 +187,16 @@ class DescendantsTest extends TestCase
         $t = $this->tree($this->person('Isko'), 2);
         $this->assertSame(['Ambo', 'Tomas Santos', 'Juan Santos', 'Rosa Santos'], array_map(fn ($k) => $t['people'][$k['id']]['name'], $t['root']['kids']));
     }
+
+    public function test_every_box_carries_its_name_without_the_last_name_for_the_last_names_option(): void
+    {
+        $andres = $this->person('Andres', 'Santos', 'abt. 1901');
+        $andres->update(['suffix' => 'Sr.']);
+
+        $t = $this->tree($this->person('Juan'), 3);
+        $this->assertSame('Andres Sr.', $t['people'][$andres->id]['short_name']);
+        $this->assertSame('Andres Santos Sr.', $t['people'][$andres->id]['name']);
+        $this->assertSame('Lucia', $t['people'][$this->person('Lucia')->id]['short_name'], 'spouse boxes too');
+        $this->assertSame('Isko', $this->tree($this->person('Isko'), 2)['people'][$this->person('Isko')->id]['short_name'], 'a one-name person keeps it');
+    }
 }

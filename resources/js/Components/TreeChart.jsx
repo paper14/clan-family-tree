@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { hierarchy, tree as d3tree } from 'd3-hierarchy';
-import { chartGen } from '../lib/format';
+import { chartGen, chartName, cousinTag } from '../lib/format';
 
 // Mirrors the design tokens --node-width (176px), --node-gap (24px) and --generation-gap (72px).
 export const NODE_W = 176;
@@ -66,7 +66,7 @@ export function layoutTree(root, collapsed = new Set()) {
     return { units, paths, w: maxX - minX, h: maxY + 24, maxRow: Math.max(0, ...Object.values(widest)) };
 }
 
-function Box({ p, x, y, clanLine, gen, opts, rootClanId, founderStyle }) {
+function Box({ p, x, y, clanLine, gen, tag, opts, rootClanId, founderStyle }) {
     const hideDates = opts.redact && p.is_living;
     const dt = opts.dates && !hideDates ? p.span : '';
     const living = !opts.print && p.is_living;
@@ -80,9 +80,14 @@ function Box({ p, x, y, clanLine, gen, opts, rootClanId, founderStyle }) {
                 </span>
             )}
             <span className="tx">
-                {gen != null && <span className="gen">Gen {gen}</span>}
+                {(gen != null || tag) && (
+                    <span className="gen">
+                        {gen != null && `Gen ${gen}`}
+                        {tag && <span className="cz">{gen != null ? ` · ${tag}` : tag}</span>}
+                    </span>
+                )}
                 <span className="nm">
-                    {p.name}
+                    {chartName(p, opts)}
                     {p.nickname && <span className="nick"> “{p.nickname}”</span>}
                 </span>
                 {(dt || living) && (
@@ -114,7 +119,7 @@ function Box({ p, x, y, clanLine, gen, opts, rootClanId, founderStyle }) {
 
 /**
  * The chart. `layout` comes from layoutTree(); `data` is the descendants payload.
- * opts: dates, photos, redact, hidden, print, selected, relative.
+ * opts: dates, photos, redact, hidden, print, selected, relative, cousins, lastNames.
  */
 export default function TreeChart({ data, layout, opts, onToggle }) {
     const people = data.people;
@@ -126,7 +131,7 @@ export default function TreeChart({ data, layout, opts, onToggle }) {
         const n = u.node;
         const p = people[n.id];
         const g = chartGen(rootGen, n.d, opts.relative);
-        out.push(<Box key={`p${n.id}`} p={p} x={u.x} y={u.y} clanLine gen={g} opts={opts} rootClanId={rootClanId} founderStyle={p.is_founder && p.clan_id === rootClanId} />);
+        out.push(<Box key={`p${n.id}`} p={p} x={u.x} y={u.y} clanLine gen={g} tag={opts.cousins ? cousinTag(g, opts.relative) : null} opts={opts} rootClanId={rootClanId} founderStyle={p.is_founder && p.clan_id === rootClanId} />);
         let x = u.x + NODE_W;
         for (const s of n.spouses) {
             const sp = people[s.id];
